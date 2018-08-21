@@ -1,7 +1,7 @@
 # PyMa
 
 > **This is work in progress!**  The documentation is not complete, yet, and there is no guarantee that all features
-> are currently available.
+> are available at the moment.
 
 
 _PyMa_ supports **Pattern Matching** in _Python_.  It is mostly based on pattern matching from 
@@ -34,16 +34,40 @@ def simplify(node):
 
 ## Usage
 
-> TODO
+If you simply want to take _PyMa_ on a test drive, use `pyma_exec` as shown below.
+
+```python
+from pyma import pyma_exec
+
+my_code = """
+match sum([2, 3, 5, 7]):
+    case 17:
+        print("Everything's OK")
+    case x:
+        print("The result", x, "is wrong")
+"""
+
+pyma_exec(my_code)
+```
+
+> More examples and explanations are to follow...
 
 
 ## FAQ
 
-#### Can I Use _PyMa_ In My Project?
+#### Can I Use _PyMa_ in My Project?
 
 Yes, _PyMa_ is released under the [Apache 2.0 license](LICENSE), which should allow you to freely use _PyMa_ in your
 own projects.  Since the project is currently under heavy development, the pattern matching might fail in unexpected
-ways.
+ways, though.
+
+In order to provide this new syntax for pattern matching, _PyMa_ needs to translate your code before Python's own
+parser/compiler can touch it.  But, the translation process is design to only modify the bare minimum of your original
+Python code.  No commends are removed, no lines inserted or deleted, and no variables or functions renamed.  But since
+`case` and `match` have become keywords, there is a possible incompatibility with your existing code.
+
+In addition to `case` and `match`, _PyMa_ introduces two more names: `__match__`, and `__matchvalue__`, respectively.
+It is very unlikely, though, that your program uses either of these names.
 
 
 #### Why Not Just Use Regular Expressions?
@@ -51,6 +75,47 @@ ways.
 Regular expressions are great if you want to match a string, say.  The pattern matching we provide here, however, 
 works on general Python objects, and not on strings.  It is more akin to something like `isinstance`, or `hasattr`
 tests in Python.
+
+
+#### How Do I Check If a Value Has a Certain Type?
+
+Due to Python's syntax, something like `s: str` will not work in order to specify that `s` should be of type `str`.
+What you would usually do in Python is something like `isinstance(value, str)`, which translates directly to:
+```python
+case str():
+    print("We have a string!")
+``` 
+Make sure you put the parentheses after the `str`, as these parentheses tell _PyMa_ that `str` is supposed to be a 
+class against which to test, and not a new name for the value.
+
+
+#### How Do I Check If a Value Has a Certain Attribute?
+
+If you do not care about the class, or type, of an object, but only about its attributes, use the wildcard `_` as the
+class name.  The algorithm will then omit the `isinstance` check, and just test if the object's attributes fulfill the
+given conditions - which in this case is simply that there is an attribute `egg`, which can be anything.
+```python
+case _(egg=_):
+    print("We have something with an attribute 'egg'.")
+```
+The example above will be translated to a simple test of the form `hasattr(value, 'egg')`.
+
+
+#### Can I Nest The Match/Case Structures?
+
+Basically, yes, you can.  The only real limitation here is that you cannot put a `match` directly inside another
+`match`, whereas it is no problem to put a `match` inside a case.  That is to say that the following will fail:
+```python
+match x:
+    match y:
+        case z:
+```
+The reason for this is that `match` buts the value of the expression `x` into a local variable (and has some further
+book-keeping).  The second `match` messes this book-keeping up, and replaces `x` by `y`, so that subsequent tests fail.
+On the other hand, there is hardly any reason why a `match` inside another `match` should make sense, anyway.
+
+At the moment, nesting is not yet fully implemented, though.  As long you put the match/case structures in separate
+functions, there is never a problem.
 
 
 #### Is This Pattern Matching Library Efficient?
@@ -72,8 +137,12 @@ In statically compiled languages it is possible to test only once (during compil
 `eggs` and `ham`.  In Python, however, even the class `Foo` refers to might change, so that we need to test everything
 upon each matching attempt.
 
+Another limitations is due to the fact _PyMa_ tries to minimize the amount your code needs to be changed.  This means
+that each `case` statement is treated in isolation from all others, and it is therefore not possible to factor out
+common parts.  Again, there is certainly room for further improvement, but it is not a priority of _PyMa_.
 
-#### Will It Break My Code If I Use `case` And `match` As Variable Names?
+
+#### Will It Break My Code If I Use `case` and `match` as Variable Names?
 
 There is, of course, always a danger that _PyMa_'s compiler will mis-identify one of your variables as a `match`,
 or `case` statement.  However, in order to be recognised as a statement, either keyword (`case`, `match`) must be the
@@ -82,7 +151,7 @@ a function called `case`, the function call `case(...)` might be interpreted as 
 like `case = ...`, say, will not.
 
 
-#### Why Is `match` Not An Expression As In Scala?
+#### Why is `match` Not an Expression as in Scala?
 
 While _Scala_'s syntax and semantics are based on expressions, _Python_'s is not.  Compound statements like `while`,
 `if`, `for` etc. are, as a matter of fact, never expressions in Python, but clearly statements without proper value.

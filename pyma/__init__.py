@@ -10,7 +10,13 @@ import builtins, os.path, types
 from . import syntax_support
 
 
-def pyma_compile(source: str, filename: str = '<string>'):
+def pyma_exec(source: str, filename: str = '<string>'):
+    """
+    Takes the source code of a program as string, compiles, and then executes the given program.  The program can
+    contain `match`/`case` statements, which are duly replaced before using Python's builtin compiler.
+
+    The code is run inside a new dedicated module, which is then returned.
+    """
     scanner = syntax_support.TextScanner(filename, source)
     code = scanner.get_text()
     match_module = scanner.get_match_code()
