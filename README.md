@@ -79,7 +79,7 @@ def test_me():
 ```
 
 
-## Syntax for Patterns
+## Writing Patterns
 
 Patterns can be expressed using the elements described below:
 
@@ -124,9 +124,46 @@ There are some special cases, and limitations you should be aware of:
 
 - Support for lists, tuples, iterators, etc.  Must be (mostly) compatible with Python's current `a, b, *c = A` syntax
 - Support for regular expressions
+- Support for string matching
+- Further narrow the translation/compiling of `case` statements to where it is clearly meant to be one
+- Pattern matching through function decorators
 - Test suites
 - Documentation, tutorials
 
+
+## The Two Versions of the `case` Statement
+
+There are two version of the `case` statement.  You can either use `case` inside a `match` block, or as a standalone
+statement.
+
+Inside a `match` block, which is compared against the patterns is specified by `match`.
+```python
+def foo(x):
+    match x:
+        case 'a' | ... | 'z':
+            print("Lowercase letter")
+        case '0' | ... | '9':
+            print("Digit")
+        case _:
+            print("Something else")
+```
+The same could also be written without the `match`.  In that case, you need to specify the value to be tested against
+the pattern.  This done using the `as` syntax.  There is a difference, though.  The standalone `case` statements will
+all be tested, so that we explicitly need to use `return` in order to avoid printing `"Something else"` for everything.
+```python
+def foo(x):
+    case x as 'a' | ... | 'z':
+        print("Lowercase letter")
+        return
+    case x as '0' | ... | '9':
+        print("Digit")
+        return
+    case x as _:
+        print("Something else")
+```
+
+At the moment, you cannot put standalone `case` inside a `match` block, and, of course, you cannot use a `case` without
+specifying the value outside a `match` block.
 
 
 ## FAQ
@@ -186,7 +223,7 @@ match x:
     match y:
         case z:
 ```
-The reason for this is that `match` buts the value of the expression `x` into a local variable (and has some further
+The reason for this is that `match` puts the value of the expression `x` into a local variable (and has some further
 book-keeping).  The second `match` messes this book-keeping up, and replaces `x` by `y`, so that subsequent tests fail.
 On the other hand, there is hardly any reason why a `match` inside another `match` should make sense, anyway.
 
@@ -229,12 +266,40 @@ like `case = ...`, say, will not.
 
 #### Why Did You Use `@` for Name Bindings Instead of `:=`?
 
-Python 3.8 will introduce [assignment expressions (see PEP 572)](https://www.python.org/dev/peps/pep-0572/).  It would
+Python 3.8 will introduce assignment expressions (see [PEP 572](https://www.python.org/dev/peps/pep-0572/)).  It would
 therefore be natural to use `x := A` instead of `x @ A` for name bindings.
 
 In fact, I am happy to add full support for `:=`.  At the time of writing, however, `:=` is not yet a valid token in
 Python.  Using only `:=` would mean that _PyMa_ requires at least Python 3.8, while `@` has already become a valid 
 operator in Python 3.5 [PEP 465](https://www.python.org/dev/peps/pep-0465/).
+
+
+#### Why `1 | ... | 9` Instead Of the Simpler `1 ... 9`?
+
+The entire syntax of patterns in _PyMa_ is based on standard Python syntax.  Even though the patterns are semantically
+nonsense, they are syntactically valid.  The sequence `1 ... 9`, however, is not a valid sequence in Python, and would
+issue a syntax error.
+
+There are various reasons for wanting patterns to be valid Python syntax.  One of them is that _PyMa_ gets away with
+much less parsing work on its own.
+
+Apart from this issue of pragmatics, writing `1 | ... | 9` seems clearer to me, since `1 ... 9` could also mean that
+the value has to be the sequence `1, 2, 3, ..., 9` itself.  This is, however, a matter of personal taste, and thus
+debatable.
+
+
+#### Why Are There Two Versions of `case` Statements?
+
+Pattern matching does usually not only come in the form of `match` blocks.  At times, we only want to deconstruct a
+single value.  Python already supports this in part through assignments like `a, b, *c = x`.  Using the standalone
+version of `case`, you could write this in the form `case x as (a, b, *c):`.  However, the `case` statement can do much
+more than Python's assignment operator.
+
+On the other hand, while developing the library, I wondered if it possible to give meaning to `case` even outside a
+`match` block, so as to make the entire syntax as orthogonal, and as flexible as possible.
+ 
+As _PyMa_ is kind of a prototype, in the end, the standalone variant of `case` might not survive, and not make it into
+subsequent versions.  For the moment, it remains there to fully test its usefulness.
 
 
 #### Why is `match` Not an Expression as in Scala?
