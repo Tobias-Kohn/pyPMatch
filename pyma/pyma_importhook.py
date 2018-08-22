@@ -6,6 +6,12 @@
 #
 # License: Apache 2.0
 #
+"""
+Our import hook reuses Python's own `PathFinder`, which is used to locate "external" modules (as opposed to builtin
+modules).  Once the `PathFinder` has located a module, we check if the module is in the same directory (or a sub-
+directory) as the module that called the `enabled_auto_import`.  In other words: PyMa does not interfere with modules
+from other packages in your system.
+"""
 from importlib.abc import Loader, MetaPathFinder
 from importlib.machinery import ModuleSpec
 import sys
@@ -52,7 +58,21 @@ class PyMa_Finder(MetaPathFinder):
                     return ModuleSpec(result.origin, PyMa_Loader(result.origin))
             except:
                 pass
-            return result
 
-        else:
-            return None
+        return None
+
+
+def install_hook(base_path: str):
+    finder = PyMa_Finder(base_path)
+    for i, item in enumerate(sys.meta_path):
+        try:
+            if item.__name__ == 'PathFinder':
+                sys.meta_path.insert(i, finder)
+                return
+        except:
+            pass
+
+    if len(sys.meta_path) > 2:
+        sys.meta_path.insert(2, finder)
+    else:
+        sys.meta_path.append(finder)

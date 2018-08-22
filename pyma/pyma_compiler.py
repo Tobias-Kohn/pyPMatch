@@ -115,7 +115,7 @@ class Compiler(ast.NodeVisitor):
 
     def visit_Alternatives(self, node: pyma_ast.Alternatives):
         if all(isinstance(elt, pyma_ast.Constant) for elt in node.elts):
-            return f"{{}} in ({', '.join([repr(elt) for elt in node.elts])})"
+            return f"{{}} in ({', '.join([repr(elt.value) for elt in node.elts])})"
 
         code = []
         if all(isinstance(elt, (pyma_ast.AttributeDeconstructor, pyma_ast.Deconstructor)) for elt in node.elts):
@@ -154,7 +154,7 @@ class Compiler(ast.NodeVisitor):
         cond = self.visit(node.value)
         code = [
             f"self.targets['{node.target}'] = node",
-            f"return {cond.format(node)}"
+            f"return {cond.format('node')}"
         ]
         return self.make_method(code)
 
@@ -163,7 +163,7 @@ class Compiler(ast.NodeVisitor):
 
     def visit_Deconstructor(self, node: pyma_ast.Deconstructor):
         if len(node.args) == 0:
-            return "(unapply({{}}, {self.use_name(node.name)}) is not None)"
+            return f"(unapply({{}}, {self.use_name(node.name)}) is not None)"
 
         code = [
             f"u = unapply(node, {self.use_name(node.name)})",

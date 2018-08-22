@@ -34,6 +34,8 @@ def simplify(node):
 
 ## Usage
 
+#### Compile/Execute Code Directly
+
 If you simply want to take _PyMa_ on a test drive, use `pyma_exec` as shown below.
 
 ```python
@@ -50,7 +52,31 @@ match sum([2, 3, 5, 7]):
 pyma_exec(my_code)
 ```
 
-> More examples and explanations are to follow...
+
+#### Import Code From Python Modules
+
+Yet, it is probably more convenient to install the auto import hook, so that all modules in your package/project are
+compiled using the _PyMa_-compiler (if they contain a `case` statement, that is).
+```python
+from pyma import enable_auto_import
+enable_auto_import()
+
+import my_module
+my_module.test_me()
+```
+The contents of `my_module.py` is then something like:
+```python
+def test_me():
+    match sum([2, 3, 5, 7]):
+        case 17:
+            print("Everything's OK")
+        case 11 | 13 | 17 | 19:
+            print("At least, it's still a prime number")
+        case i @ int():
+            print("The result", i, "is wrong")
+        case x:
+            print("Not even an integer?", x)
+```
 
 
 ## FAQ

@@ -23,11 +23,7 @@ def enable_auto_import():
     else:
         path = ''
 
-    finder = pyma_importhook.PyMa_Finder(path)
-    if len(sys.meta_path) > 2:
-        sys.meta_path.insert(2, finder)
-    else:
-        sys.meta_path.append(finder)
+    pyma_importhook.install_hook(path)
 
 
 def pyma_exec(source: str, filename: str = '<string>', module=None):
