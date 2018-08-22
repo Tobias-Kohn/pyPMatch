@@ -91,6 +91,7 @@ Patterns can be expressed using the elements described below:
 - `Foo(egg=A, ham=B)` matches all instances of `Foo`, where the attributes `egg`, and `ham` match the patterns
   `A` and `B`, respectively;
 - `12`, `'abc'`, `True` and other constant match a value if the value is equal to the constant;
+- `{'RE'}` matches if the value is a string that conforms to the regular expression given;
 - `A | B | C` matches if at least one of the patterns `A`, `B`, `C` matches;
 - `x @ A` matches if the pattern `A` matches, and binds the value to the variable `x` if the entire match is 
   successful;
@@ -123,10 +124,10 @@ There are some special cases, and limitations you should be aware of:
 #### Roadmap  
 
 - Support for lists, tuples, iterators, etc.  Must be (mostly) compatible with Python's current `a, b, *c = A` syntax
-- Support for regular expressions
-- Support for string matching
+- Full support for regular expressions and string matching
 - Further narrow the translation/compiling of `case` statements to where it is clearly meant to be one
 - Pattern matching through function decorators
+- Raise error if no match is found
 - Test suites
 - Documentation, tutorials
 

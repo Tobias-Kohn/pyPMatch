@@ -186,6 +186,16 @@ class Compiler(ast.NodeVisitor):
     def visit_ListPattern(self, node: pyma_ast.ListPattern):
         raise NotImplementedError("List Pattern Not Yet Implemented!")
 
+    def visit_RegularExpression(self, node: pyma_ast.RegularExpression):
+        code = [
+            "import re",
+            "if not isinstance(node, str): return False",
+            f"m = re.match({repr(node.pattern)}, node)",
+            "if m is None: return False",
+            "return m.end() == len(node)"
+        ]
+        return self.make_method(code)
+
     def visit_Wildcard(self, node: pyma_ast.Wildcard):
         if node.is_seq:
             raise self._syntax_error("unexpected sequence wildcard", node)

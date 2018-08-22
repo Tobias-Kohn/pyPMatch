@@ -64,6 +64,15 @@ class ListPattern(ast.expr):
     _fields = ('left', 'right', 'sub_seqs', 'gap_bindings', 'min_length')
 
 
+class RegularExpression(ast.expr):
+
+    def __init__(self, pattern: str):
+        super().__init__()
+        self.pattern = pattern
+
+    _fields = ('pattern',)
+
+
 class SequenceDeconstructor(ast.expr):
 
     def __init__(self, elts: list):

@@ -102,6 +102,8 @@ class PatternParser(ast.NodeTransformer):
             name = target.id
             if name == '_':
                 return value
+            elif isinstance(value, pyma_ast.Binding):
+                raise self._syntax_error("binding value to more than one name", value)
             else:
                 return pyma_ast.Binding(name, value)
 
@@ -302,6 +304,12 @@ class PatternParser(ast.NodeTransformer):
 
     def visit_Num(self, node: ast.Num):
         return _cl(pyma_ast.Constant(value=node.n), node)
+
+    def visit_Set(self, node: ast.Set):
+        if len(node.elts) == 1 and isinstance(node.elts[0], ast.Str):
+            return _cl(pyma_ast.RegularExpression(pattern=node.elts[0].s), node)
+        else:
+            self.generic_visit(node)
 
     def visit_Starred(self, node: ast.Starred):
         if isinstance(node.value, ast.Name):
