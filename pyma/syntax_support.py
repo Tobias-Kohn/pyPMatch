@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 16.08.2018
-# Updated: 21.08.2018
+# Updated: 22.08.2018
 #
 # License: Apache 2.0
 #
@@ -66,7 +66,7 @@ class CaseStatement(object):
             dest_vars = '(__match__.Match.guard, ' + ', '.join(targets) + ')'
         else:
             dest_vars = '__match__.Match.guard'
-        sources = ', '.join([pyma_compiler.replace_dot(key) + '=' + key for key in self.compiler.sources])
+        sources = ', '.join([key + '=' + key for key in self.compiler.sources])
         if sources != '':
             sources = ', ' + sources
         result = [

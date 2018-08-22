@@ -2,20 +2,13 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 21.08.2018
+# Updated: 22.08.2018
 #
 # License: Apache 2.0
 #
 import ast
-from . import p_ast
+from . import pyma_ast
 from . import pattern_parser
-
-
-def replace_dot(s):
-    if '.' in s:
-        return '_' + s.replace('.', '_') + '_'
-    else:
-        return s
 
 
 class Compiler(ast.NodeVisitor):
@@ -28,7 +21,7 @@ class Compiler(ast.NodeVisitor):
         self.source_text = source_text
         self.methods = []
         self.alternative_lock = 0
-        self.sources = set()
+        self.sources = []
         self.targets = []
         self._parser = pattern_parser.PatternParser(self.filename, self.source_text)
 
@@ -43,7 +36,7 @@ class Compiler(ast.NodeVisitor):
         node = self._parser.parse(node)
         self.methods = []
         self.alternative_lock = 0
-        self.sources = set()
+        self.sources = []
         self.targets = []
         cond = self.visit(node).format('node')
         self.targets.sort()
@@ -103,9 +96,14 @@ class Compiler(ast.NodeVisitor):
 
     def use_name(self, name):
         if type(name) is str:
-            self.sources.add(name)
-            name = replace_dot(name)
-            return f"self.source['{name}']"
+            if '.' in name:
+                idx = name.index('.')
+                base = self.use_name(name[:idx])
+                return base + name[idx:]
+            else:
+                if name not in self.sources:
+                    self.sources.append(name)
+                return f"self.source['{name}']"
         elif type(name) in (list, set, tuple):
             names = [self.use_name(n) for n in name]
             return '(' + ', '.join(names) + ')'
@@ -115,12 +113,12 @@ class Compiler(ast.NodeVisitor):
     def generic_visit(self, node):
         raise SystemError(f"unexpected node in pattern matching: '{ast.dump(node)}'")
 
-    def visit_Alternatives(self, node: p_ast.Alternatives):
-        if all(isinstance(elt, p_ast.Constant) for elt in node.elts):
+    def visit_Alternatives(self, node: pyma_ast.Alternatives):
+        if all(isinstance(elt, pyma_ast.Constant) for elt in node.elts):
             return f"{{}} in ({', '.join([repr(elt) for elt in node.elts])})"
 
         code = []
-        if all(isinstance(elt, (p_ast.AttributeDeconstructor, p_ast.Deconstructor)) for elt in node.elts):
+        if all(isinstance(elt, (pyma_ast.AttributeDeconstructor, pyma_ast.Deconstructor)) for elt in node.elts):
             names = set()
             for elt in node.elts:
                 if type(elt.name) is str:
@@ -130,7 +128,7 @@ class Compiler(ast.NodeVisitor):
                         names.add(n)
 
             test = f"isinstance({{}}, {self.use_name(names)})"
-            if all(isinstance(elt, p_ast.Deconstructor) and len(elt.args) == 0 for elt in node.elts):
+            if all(isinstance(elt, pyma_ast.Deconstructor) and len(elt.args) == 0 for elt in node.elts):
                 return test
             code.append(f"if not {test.format('node')}: return False")
 
@@ -141,7 +139,7 @@ class Compiler(ast.NodeVisitor):
         self.alternative_lock -= 1
         return self.make_method(code)
 
-    def visit_AttributeDeconstructor(self, node: p_ast.AttributeDeconstructor):
+    def visit_AttributeDeconstructor(self, node: pyma_ast.AttributeDeconstructor):
         code = [
             f"if not isinstance(node, {self.use_name(node.name)}): return False",
         ]
@@ -151,7 +149,7 @@ class Compiler(ast.NodeVisitor):
         code.append("return True")
         return self.make_method(code)
 
-    def visit_Binding(self, node: p_ast.Binding):
+    def visit_Binding(self, node: pyma_ast.Binding):
         self.check_target(node.target, node)
         cond = self.visit(node.value)
         code = [
@@ -160,10 +158,10 @@ class Compiler(ast.NodeVisitor):
         ]
         return self.make_method(code)
 
-    def visit_Constant(self, node: p_ast.Constant):
+    def visit_Constant(self, node: pyma_ast.Constant):
         return f"{{}} == {repr(node.value)}"
 
-    def visit_Deconstructor(self, node: p_ast.Deconstructor):
+    def visit_Deconstructor(self, node: pyma_ast.Deconstructor):
         if len(node.args) == 0:
             return "(unapply({{}}, {self.use_name(node.name)}) is not None)"
 
@@ -185,10 +183,10 @@ class Compiler(ast.NodeVisitor):
             code.append("return True")
         return self.make_method(code)
 
-    def visit_ListPattern(self, node: p_ast.ListPattern):
+    def visit_ListPattern(self, node: pyma_ast.ListPattern):
         raise NotImplementedError("List Pattern Not Yet Implemented!")
 
-    def visit_Wildcard(self, node: p_ast.Wildcard):
+    def visit_Wildcard(self, node: pyma_ast.Wildcard):
         if node.is_seq:
             raise self._syntax_error("unexpected sequence wildcard", node)
         return "True"
