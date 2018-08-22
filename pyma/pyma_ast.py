@@ -51,19 +51,6 @@ class Deconstructor(ast.expr):
     _fields = ('name', 'args',)
 
 
-class ListPattern(ast.expr):
-
-    def __init__(self, left: list, right: list, sub_seqs: list, gap_bindings: list, min_length: int):
-        super().__init__()
-        self.left = left
-        self.right = right
-        self.sub_seqs = sub_seqs
-        self.gap_bindings = gap_bindings
-        self.min_length = min_length
-
-    _fields = ('left', 'right', 'sub_seqs', 'gap_bindings', 'min_length')
-
-
 class RegularExpression(ast.expr):
 
     def __init__(self, pattern: str):
@@ -73,22 +60,27 @@ class RegularExpression(ast.expr):
     _fields = ('pattern',)
 
 
-class SequenceDeconstructor(ast.expr):
+class SequencePattern(ast.expr):
+
+    def __init__(self, left: list, right: list, sub_seqs: list, targets: list, min_length: int, exact_length: int):
+        super().__init__()
+        self.left = left
+        self.right = right
+        self.sub_seqs = sub_seqs
+        self.targets = targets
+        self.min_length = min_length
+        self.exact_length = exact_length
+
+    _fields = ('left', 'right', 'sub_seqs', 'targets', 'min_length', 'exact_length')
+
+
+class StringDeconstructor(ast.expr):
 
     def __init__(self, elts: list):
         super().__init__()
         self.elts = elts
 
     _fields = ('elts',)
-
-
-class TuplePattern(ast.expr):
-
-    def __init__(self, elts: list):
-        super().__init__()
-        self.elts = elts
-
-    _fields = ('elts')
 
 
 class Wildcard(ast.expr):

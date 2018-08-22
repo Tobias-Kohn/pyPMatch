@@ -32,3 +32,12 @@ def pyma_exec(source: str, filename: str = '<string>', module=None):
     mod.__match__ = match_mod
     exec(compiled_code, mod.__dict__)
     return mod
+
+
+def pyma_translate(source: str):
+    """
+    Translates the given source program to regular Python code, and returns the translated code, as well as the
+    code of the auxiliary `__match__` module.
+    """
+    # TODO: implement and test
+    return '', ''

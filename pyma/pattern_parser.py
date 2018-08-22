@@ -179,7 +179,7 @@ class PatternParser(ast.NodeTransformer):
     def _handle_seq(self, node):
         elts = [self.visit(elt) for elt in node.elts]
         if len(elts) == 0:
-            return _cl(pyma_ast.ListPattern([], [], [], [], 0), node)
+            return _cl(pyma_ast.SequencePattern([], [], [], [], 0, 0), node)
 
         # Split the sequence at each 'sequence wildcard'
         names = []
@@ -200,7 +200,8 @@ class PatternParser(ast.NodeTransformer):
         left = sub_seqs[0]
         del sub_seqs[0]
         if len(sub_seqs) == 0:
-            return _cl(pyma_ast.ListPattern(left, [], [], [], len(left)), node)
+            exact_length = len(left) if len(left) == len(elts) else None
+            return _cl(pyma_ast.SequencePattern(left, [], [], [], len(left), exact_length), node)
         if len(left) > 0 and isinstance(left[-1], pyma_ast.Wildcard):
             raise self._syntax_error("invalid wildcards in sequence", node)
 
@@ -225,7 +226,7 @@ class PatternParser(ast.NodeTransformer):
                 raise self._syntax_error("invalid wildcards in sequence", node)
 
         min_length = len(left) + len(right) + sum([len(item) for item in sub_seqs])
-        return _cl(pyma_ast.ListPattern(left, right, sub_seqs, names, min_length), node)
+        return _cl(pyma_ast.SequencePattern(left, right, sub_seqs, names, min_length, None), node)
 
     def visit_Alternatives(self, node: pyma_ast.Alternatives):
         return node
@@ -242,7 +243,7 @@ class PatternParser(ast.NodeTransformer):
             # TODO: add proper support for string deconstructor
             elts = _flatten_op(node, ast.Add)
             elts = [self.visit(elt) for elt in elts]
-            return pyma_ast.SequenceDeconstructor(elts=elts)
+            return pyma_ast.StringDeconstructor(elts=elts)
 
         elif isinstance(op, ast.BitOr):
             elts = _flatten_op(node, ast.BitOr)
@@ -285,7 +286,7 @@ class PatternParser(ast.NodeTransformer):
     def visit_List(self, node: ast.List):
         return self._handle_seq(node)
 
-    def visit_ListPattern(self, node: pyma_ast.ListPattern):
+    def visit_ListPattern(self, node: pyma_ast.SequencePattern):
         return node
 
     def visit_Module(self, node: ast.Module):
@@ -323,9 +324,6 @@ class PatternParser(ast.NodeTransformer):
 
     def visit_Str(self, node: ast.Str):
         return _cl(pyma_ast.Constant(value=node.s), node)
-
-    def visit_Tuple(self, node: ast.Tuple):
-        return pyma_ast.TuplePattern([self.visit(elt) for elt in node.elts])
 
     def visit_Wildcard(self, node: pyma_ast.Wildcard):
         return node

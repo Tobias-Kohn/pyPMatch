@@ -93,6 +93,9 @@ Patterns can be expressed using the elements described below:
 - `12`, `'abc'`, `True` and other constant match a value if the value is equal to the constant;
 - `{'RE'}` matches if the value is a string that conforms to the regular expression given;
 - `A | B | C` matches if at least one of the patterns `A`, `B`, `C` matches;
+- `[A, B, C, ..., D, E]` matches any sequence where the first three elements match `A`, `B`, and `C` and the last two 
+  elements match `D`, and `E`, respectively.  This also includes Python's usual iterator unpacking, such as 
+  `[a, b, *c, d]`, which is interpreted as `[a, b, c @ ..., d]`; 
 - `x @ A` matches if the pattern `A` matches, and binds the value to the variable `x` if the entire match is 
   successful;
 - `_` is a wildcard that matches everything;
@@ -121,9 +124,10 @@ There are some special cases, and limitations you should be aware of:
   write the ellipsis, and cannot use the otherwise equivalent token `*_`.
   
   
-#### Roadmap  
+#### Roadmap
 
-- Support for lists, tuples, iterators, etc.  Must be (mostly) compatible with Python's current `a, b, *c = A` syntax
+- Support for lists, tuples, iterators, etc.  Must be (mostly) compatible with Python's current iterable unpacking 
+  syntax `a, b, *c = X`
 - Full support for regular expressions and string matching
 - Further narrow the translation/compiling of `case` statements to where it is clearly meant to be one
 - Pattern matching through function decorators

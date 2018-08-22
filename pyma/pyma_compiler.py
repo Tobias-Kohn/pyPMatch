@@ -183,9 +183,6 @@ class Compiler(ast.NodeVisitor):
             code.append("return True")
         return self.make_method(code)
 
-    def visit_ListPattern(self, node: pyma_ast.ListPattern):
-        raise NotImplementedError("List Pattern Not Yet Implemented!")
-
     def visit_RegularExpression(self, node: pyma_ast.RegularExpression):
         code = [
             "import re",
@@ -194,6 +191,56 @@ class Compiler(ast.NodeVisitor):
             "if m is None: return False",
             "return m.end() == len(node)"
         ]
+        return self.make_method(code)
+
+    def visit_SequencePattern(self, node: pyma_ast.SequencePattern):
+        code = [ "try:" ]
+
+        if node.exact_length is not None:
+            code.append(f"\tif len(node) != {node.exact_length}: return False")
+        elif node.min_length is not None:
+            code.append(f"\tif len(node) < {node.min_length}: return False")
+
+        for i, elt in enumerate(node.left):
+            cond = self.visit(elt).format(f"node[{i}]")
+            code.append(f"\tif not {cond}: return False")
+        for i, elt in enumerate(node.right):
+            cond = self.visit(elt).format(f"node[{-i-1}]")
+            code.append(f"\tif not {cond}: return False")
+
+        if len(node.sub_seqs) > 0:
+            code.append(f"\ti = {len(node.left)}")
+            code.append(f"\tmax_i = len(node) - {len(node.right)}")
+            for j, seq in enumerate(node.sub_seqs):
+                cond = ' and '.join([self.visit(elt).format("node[i+{}]".format(i)) for i, elt in enumerate(seq)])
+                code.append("\ti0 = i")
+                code.append("\thas_match = False")
+                code.append("\twhile i < max_i:")
+                code.append(f"\t\tif {cond}:")
+                code.append("\t\t\thas_match = True")
+                code.append("\t\t\tbreak")
+                code.append("\t\ti += 1")
+                code.append("\tif not has_match: return False")
+                name = node.targets[j] if j < len(node.targets) else None
+                if name is not None:
+                    self.check_target(name, node)
+                    code.append(f"\tself.targets['{name}'] = node[i0:i]")
+                code.append(f"\ti += {len(seq)}")
+            if len(node.targets) > len(node.sub_seqs) and node.targets[-1] is not None:
+                name = node.targets[-1]
+                self.check_target(name, node)
+                b = '' if len(node.right) == 0 else -len(node.right)
+                code.append(f"\tself.targets['{name}'] = node[i:{b}]")
+
+        elif len(node.targets) == 1 and node.targets[0] is not None:
+            self.check_target(node.targets[0], node)
+            a = '' if len(node.left) == 0 else len(node.left)
+            b = '' if len(node.right) == 0 else -len(node.right)
+            code.append(f"\tself.targets['{node.targets[0]}'] = node[{a}:{b}]")
+
+        code.append("\treturn True")
+        code.append("except:")
+        code.append("\treturn False")
         return self.make_method(code)
 
     def visit_Wildcard(self, node: pyma_ast.Wildcard):
