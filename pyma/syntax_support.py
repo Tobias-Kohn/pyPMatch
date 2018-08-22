@@ -256,7 +256,7 @@ class TextScanner(object):
         while token_stream.has_next:
             token = token_stream.next()
             # We only look for `match` and `case` at the very beginning of a line.
-            if token.type in (tokenize.NL, tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT):
+            if token.type in (tokenize.NL, tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT, tokenize.ENCODING):
                 token = token_stream.head
                 if token is None:
                     break
