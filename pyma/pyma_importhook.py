@@ -54,6 +54,7 @@ class PyMa_Finder(MetaPathFinder):
         if self._path_finder:
             result = self._path_finder.find_spec(fullname, path, target)
             try:
+                # TODO: Check if the file contains a `case` in the first place
                 if result.origin.startswith(self._base_path):
                     return ModuleSpec(result.origin, PyMa_Loader(result.origin))
             except:

@@ -79,6 +79,56 @@ def test_me():
 ```
 
 
+## Syntax for Patterns
+
+Patterns can be expressed using the elements described below:
+
+> As mentioned above: **not everything is implemented and tested**, yet!
+
+- `Foo()` matches all instances of the class `Foo`;
+- `Foo(A, B, C)` deconstructs an instance of `Foo`, which must yield three values, which then must match the patterns
+  `A`, `B`, and `C`, respectively;
+- `Foo(egg=A, ham=B)` matches all instances of `Foo`, where the attributes `egg`, and `ham` match the patterns
+  `A` and `B`, respectively;
+- `12`, `'abc'`, `True` and other constant match a value if the value is equal to the constant;
+- `A | B | C` matches if at least one of the patterns `A`, `B`, `C` matches;
+- `x @ A` matches if the pattern `A` matches, and binds the value to the variable `x` if the entire match is 
+  successful;
+- `_` is a wildcard that matches everything;
+- `*_` and `...` are wildcards used in sequences, usually with the exact same meaning;
+- `x` is an abbreviation for `x @ _`, matches everything, and binds it to `x`.
+
+
+There are some special cases, and limitations you should be aware of:
+
+- Any variable `x` can only be bound once inside a single pattern (a `case` statement).  It is legal to reuse
+  `x` in different `case` statements, but you cannot have something like `Foo(x, x)`.  If you need to test if both
+  values in `Foo` are equal, use `Foo(x, y) if x == y` instead;
+- You cannot bind anything inside an alternative.  Hence, `A|(x @ B)|C` is illegal;
+- It is not possible to bind anything to the wildcard `_`.  While `_` is a regular name in Python, it has special
+  meaning in _PyMa_ patterns.  Something like `_ @ A` is, however, not illegal, but equivalent to `A()`;
+- Even though the ellipsis `...` is a 'normal value' in Python, it has a special meaning in _PyMa_ as a wildcard;
+- _PyMa_ does not look at the names involved.  If a name is followed by parentheses as in `Foo()`, the name is taken
+  to refer to a class/type, against which the value is tested.  Otherwise, the name is a variable that will match any
+  value.  This means that the pattern `str` will match everything and override the variable `str` in the process,
+  while `str()` will test if the value is a string;
+- There are a few exceptions to the last rule.  Since name bindings are illegal in alternatives, anyway, you can write
+  `A|B|C` as an abbreviation for `A()|B()|C()`.  Furthermore, `x @ A` is interpreted as `x @ A()`, since it makes no
+  sense to assign to distinct variables to the exact same value;
+- `3 | ... | 6` is an abbreviation for the sequence `3|4|5|6`.  This syntax can be used with integers, and characters
+  (single-character strings).  Thus, you can also write `'a' | ... | 'z'`, for instance.  Note, that here you need to
+  write the ellipsis, and cannot use the otherwise equivalent token `*_`.
+  
+  
+#### Roadmap  
+
+- Support for lists, tuples, iterators, etc.  Must be (mostly) compatible with Python's current `a, b, *c = A` syntax
+- Support for regular expressions
+- Test suites
+- Documentation, tutorials
+
+
+
 ## FAQ
 
 #### Can I Use _PyMa_ in My Project?
@@ -175,6 +225,16 @@ or `case` statement.  However, in order to be recognised as a statement, either 
 first word on a line, and it cannot be followed by a colon, or an operator (such as an assignment).  So, if you have
 a function called `case`, the function call `case(...)` might be interpreted as a `case` statement, but an assignment
 like `case = ...`, say, will not.
+
+
+#### Why Did You Use `@` for Name Bindings Instead of `:=`?
+
+Python 3.8 will introduce [assignment expressions (see PEP 572)](https://www.python.org/dev/peps/pep-0572/).  It would
+therefore be natural to use `x := A` instead of `x @ A` for name bindings.
+
+In fact, I am happy to add full support for `:=`.  At the time of writing, however, `:=` is not yet a valid token in
+Python.  Using only `:=` would mean that _PyMa_ requires at least Python 3.8, while `@` has already become a valid 
+operator in Python 3.5 [PEP 465](https://www.python.org/dev/peps/pep-0465/).
 
 
 #### Why is `match` Not an Expression as in Scala?
