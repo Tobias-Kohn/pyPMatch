@@ -56,10 +56,10 @@ pyma_exec(my_code)
 #### Import Code From Python Modules
 
 Yet, it is probably more convenient to install the auto import hook, so that all modules in your package/project are
-compiled using the _PyMa_-compiler (if they contain a `case` statement, that is).
+compiled using the _PyMa_-compiler (if they contain a `case` statement, that is).  The auto import is installed
+directly through the import of `enable_auto_import`.
 ```python
 from pyma import enable_auto_import
-enable_auto_import()
 
 import my_module
 my_module.test_me()

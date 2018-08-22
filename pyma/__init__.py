@@ -6,25 +6,8 @@
 #
 # License: Apache 2.0
 #
-import builtins, inspect, os.path, types
-from . import pyma_importhook
+import builtins, os.path, types
 from . import syntax_support
-
-
-def enable_auto_import():
-    """
-    Install an import-hook, so that files with `match`/`case` in them are automatically compiler by PyMa.
-    """
-    # We only install the import-hook for modules in the caller's directory and sub-directories.  To that end, we
-    # have to extract the path of the calling module first.
-    frame = inspect.currentframe().f_back
-    parent_file = frame.f_code.co_filename
-    if not parent_file.startswith('<'):
-        path = os.path.dirname(parent_file)
-    else:
-        path = ''
-
-    pyma_importhook.install_hook(path)
 
 
 def pyma_exec(source: str, filename: str = '<string>', module=None):
