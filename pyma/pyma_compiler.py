@@ -196,6 +196,16 @@ class Compiler(ast.NodeVisitor):
         ]
         return self.make_method(code)
 
+    def visit_RegularExprType(self, node: pyma_ast.RegularExprType):
+        code = [
+            "try:",
+            f"\t{node.type_name}(node)",
+            "\treturn True",
+            "except ValueError:",
+            "\treturn False"
+        ]
+        return self.make_method(code)
+
     def visit_SequencePattern(self, node: pyma_ast.SequencePattern):
         code = [ "try:" ]
 

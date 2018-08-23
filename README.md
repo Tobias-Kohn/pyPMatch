@@ -4,7 +4,7 @@
 > are available at the moment.
 
 
-_PyMa_ supports **Pattern Matching** in _Python_.  It is mostly based on pattern matching from 
+_PyMa_ provides **Pattern Matching** in _Python_.  It is mostly based on the pattern matching found in 
 [_Scala_](https://www.scala-lang.org/).
 
 
@@ -16,8 +16,8 @@ special about the `ast`-module from _PyMa_'s point of view, and you can equally 
 else.
 
 ```python
-from ast import Add, BinOp, Num
 import ast
+from ast import Add, BinOp, Num
 
 def simplify(node):
     match node:
@@ -30,6 +30,8 @@ def simplify(node):
         case _:
             return node
 ```
+
+You will find more examples in the [examples folder](examples).
 
 
 ## Usage
@@ -81,7 +83,7 @@ def test_me():
 
 ## Writing Patterns
 
-Patterns can be expressed using the elements described below:
+Patterns can be expressed using the elements described below.
 
 > As mentioned above: **not everything is implemented and tested**, yet!
 
@@ -116,9 +118,11 @@ There are some special cases, and limitations you should be aware of:
   to refer to a class/type, against which the value is tested.  Otherwise, the name is a variable that will match any
   value.  This means that the pattern `str` will match everything and override the variable `str` in the process,
   while `str()` will test if the value is a string;
+- Instead of writing a regular expression on your own, you can use `{int}`, or `{float}` to check if a string value
+  contains an `int`, or a `float`, respectively;
 - There are a few exceptions to the last rule.  Since name bindings are illegal in alternatives, anyway, you can write
   `A|B|C` as an abbreviation for `A()|B()|C()`.  Furthermore, `x @ A` is interpreted as `x @ A()`, since it makes no
-  sense to assign to distinct variables to the exact same value;
+  sense to bind two distinct variables to the exact same value;
 - `3 | ... | 6` is an abbreviation for the sequence `3|4|5|6`.  This syntax can be used with integers, and characters
   (single-character strings).  Thus, you can also write `'a' | ... | 'z'`, for instance.  Note, that here you need to
   write the ellipsis, and cannot use the otherwise equivalent token `*_`.

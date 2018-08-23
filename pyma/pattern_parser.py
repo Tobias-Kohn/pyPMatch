@@ -307,10 +307,24 @@ class PatternParser(ast.NodeTransformer):
         return _cl(pyma_ast.Constant(value=node.n), node)
 
     def visit_Set(self, node: ast.Set):
-        if len(node.elts) == 1 and isinstance(node.elts[0], ast.Str):
-            return _cl(pyma_ast.RegularExpression(pattern=node.elts[0].s), node)
-        else:
-            self.generic_visit(node)
+        if len(node.elts) == 1:
+            elt = node.elts[0]
+            if isinstance(elt, ast.Str):
+                return _cl(pyma_ast.RegularExpression(pattern=elt.s), node)
+
+            elif isinstance(elt, ast.Name):
+                name = elt.id
+                if name in ('float', 'int'):
+                    return _cl(pyma_ast.RegularExprType(type_name=name), node)
+                elif name in ('name', 'whitespace'):
+                    # TODO: the 'name' currently only works correct in ASCII
+                    value = {
+                        'name':  r'[A-Za-z_]\w+',
+                        'whitespace': r'\s+',
+                    }[name]
+                    return _cl(pyma_ast.RegularExpression(pattern=value), node)
+
+        self.generic_visit(node)
 
     def visit_Starred(self, node: ast.Starred):
         if isinstance(node.value, ast.Name):

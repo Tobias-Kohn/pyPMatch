@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 22.08.2018
+# Updated: 23.08.2018
 #
 # License: Apache 2.0
 #
@@ -58,6 +58,15 @@ class RegularExpression(ast.expr):
         self.pattern = pattern
 
     _fields = ('pattern',)
+
+
+class RegularExprType(ast.expr):
+
+    def __init__(self, type_name: str):
+        super().__init__()
+        self.type_name = type_name
+
+    _fields = ('type_name',)
 
 
 class SequencePattern(ast.expr):
