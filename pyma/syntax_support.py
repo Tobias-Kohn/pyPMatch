@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 16.08.2018
-# Updated: 22.08.2018
+# Updated: 23.08.2018
 #
 # License: Apache 2.0
 #
@@ -61,7 +61,7 @@ class CaseStatement(object):
         """
         self.code = self.compiler.create_class(self.pattern, self.name, self.guard)
         targets = self.compiler.get_targets()
-        value = '__matchvalue__' if self.value is None else self.value
+        value = '__matchvalue__' if self.value is None else f"[{self.value}, False]"
         if len(targets) > 0:
             dest_vars = '(__match__.Match.guard, ' + ', '.join(targets) + ')'
         else:
@@ -71,7 +71,7 @@ class CaseStatement(object):
             sources = ', ' + sources
         result = [
             text[:self.start_pos],
-            f"with __match__.{self.name}({value}, {repr(self.value is None)}{sources}) as {dest_vars}:",
+            f"with __match__.{self.name}({value}) as {dest_vars}:",
             text[self.end_pos:]
         ]
         return ''.join(result)

@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 22.08.2018
-# Updated: 22.08.2018
+# Updated: 23.08.2018
 #
 # License: Apache 2.0
 #
@@ -55,6 +55,7 @@ class PyMa_Finder(MetaPathFinder):
             result = self._path_finder.find_spec(fullname, path, target)
             try:
                 # TODO: Check if the file contains a `case` in the first place
+                # TODO: This test does not work under Windows, because some paths use '\' and others use '/'
                 if result.origin.startswith(self._base_path):
                     return ModuleSpec(result.origin, PyMa_Loader(result.origin))
             except:

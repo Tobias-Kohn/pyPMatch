@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 17.08.2018
-# Updated: 21.08.2018
+# Updated: 23.08.2018
 #
 # License: Apache 2.0
 #
@@ -99,7 +99,7 @@ class Match(metaclass=MatchGuard):
         self.value = value
 
     def __enter__(self):
-        return self.value
+        return [self.value, False]
 
     def __exit__(self, exc_type, exc_value, traceback):
         return exc_type is MatchException or exc_type is None
@@ -107,15 +107,17 @@ class Match(metaclass=MatchGuard):
 
 class CaseManager(metaclass=MatchGuard):
 
-    def __init__(self, value, do_break):
-        self._do_break = do_break
+    def __init__(self, value_item):
+        self._value_item = value_item
+        value, handled = value_item
+        self._handled = handled
         self._guard = False
         self._value = value
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is MatchException or exc_type is None:
-            if self._guard and self._do_break:
-                raise MatchException
+            if self._guard:
+                self._value_item[1] = True
             return True
         else:
             return False

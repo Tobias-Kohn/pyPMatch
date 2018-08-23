@@ -6,8 +6,8 @@
 
 _PyMa_ supports **Pattern Matching** in _Python_.  It is mostly based on pattern matching from 
 [_Scala_](https://www.scala-lang.org/).
-  
-  
+
+
 ## Example
 
 _PyMa_ was initially developed for analysis of Python code via its _Abstract Syntax Tree_ (AST).  The example below

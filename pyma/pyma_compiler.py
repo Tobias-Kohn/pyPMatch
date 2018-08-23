@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 22.08.2018
+# Updated: 23.08.2018
 #
 # License: Apache 2.0
 #
@@ -54,7 +54,10 @@ class Compiler(ast.NodeVisitor):
 
     def _create_enter(self):
         result = "\tdef __enter__(self):\n" \
-                 "\t\tself._guard = self.test(self._value)\n" \
+                 "\t\tif self._handled:\n" \
+                 "\t\t\tself._guard = False\n" \
+                 "\t\telse:\n" \
+                 "\t\t\tself._guard = self.test(self._value)\n" \
                  "\t\tt = self.targets\n"
         if len(self.targets) > 0:
             targets = ', '.join(["t['{}']".format(name) for name in self.targets])
@@ -65,8 +68,8 @@ class Compiler(ast.NodeVisitor):
 
     def _create_init(self):
         targets = ', '.join([" '{}': None".format(name) for name in self.targets])
-        result = "\tdef __init__(self, value, do_break, **source):\n" \
-                 "\t\tsuper().__init__(value, do_break)\n" \
+        result = "\tdef __init__(self, value, **source):\n" \
+                 "\t\tsuper().__init__(value)\n" \
                  "\t\tself.source = source\n" \
                  "\t\tself.targets = {" + targets + " }"
         return result
