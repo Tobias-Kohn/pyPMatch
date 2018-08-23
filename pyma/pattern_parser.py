@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 22.08.2018
+# Updated: 23.08.2018
 #
 # License: Apache 2.0
 #
@@ -324,6 +324,9 @@ class PatternParser(ast.NodeTransformer):
 
     def visit_Str(self, node: ast.Str):
         return _cl(pyma_ast.Constant(value=node.s), node)
+
+    def visit_Tuple(self, node: ast.Tuple):
+        return self._handle_seq(node)
 
     def visit_Wildcard(self, node: pyma_ast.Wildcard):
         return node

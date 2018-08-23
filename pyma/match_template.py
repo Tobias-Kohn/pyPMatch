@@ -96,7 +96,10 @@ class MatchGuard(type):
 class Match(metaclass=MatchGuard):
 
     def __init__(self, value):
-        self.value = value
+        if len(value) == 1:
+            self.value = value[0]
+        else:
+            self.value = tuple(value)
 
     def __enter__(self):
         return [self.value, False]

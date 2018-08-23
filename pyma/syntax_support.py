@@ -71,7 +71,7 @@ class CaseStatement(object):
             sources = ', ' + sources
         result = [
             text[:self.start_pos],
-            f"with __match__.{self.name}({value}) as {dest_vars}:",
+            f"with __match__.{self.name}({value}{sources}) as {dest_vars}:",
             text[self.end_pos:]
         ]
         return ''.join(result)
@@ -106,7 +106,7 @@ class MatchStatement(object):
         """
         result = [
             text[:self.start_pos],
-            f"with __match__.Match({self.value}) as __matchvalue__:",
+            f"with __match__.Match([{self.value}]) as __matchvalue__:",
             text[self.end_pos:]
         ]
         return ''.join(result)
