@@ -27,8 +27,8 @@ def case(pattern: str):
         frame = inspect.currentframe().f_back
         multi = frame.f_locals.get(name, None)
         if not isinstance(multi, pyma_decorators.MultiFunction):
-            multi = pyma_decorators.MultiFunction(name)
-        multi.register(pattern, f)
+            multi = pyma_decorators.MultiFunction(name, frame.f_code.co_filename)
+        multi.register(frame, pattern, f)
         return multi
 
     return decorate
