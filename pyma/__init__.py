@@ -2,12 +2,36 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 22.08.2018
+# Updated: 24.08.2018
 #
 # License: Apache 2.0
 #
-import builtins, os.path, types
+import builtins, inspect, os.path, types
 from . import syntax_support
+from . import pyma_decorators
+
+
+def case(pattern: str):
+    """
+    Use `case` as a decorator for functions, with full unpacking of the argument(s).
+    ```
+    @case("[x @ int|float, *y]")
+    def foo(x, y):
+        ...
+    ```
+
+    Guards are not supported at the moment.
+    """
+    def decorate(f):
+        name = f.__code__.co_name
+        frame = inspect.currentframe().f_back
+        multi = frame.f_locals.get(name, None)
+        if not isinstance(multi, pyma_decorators.MultiFunction):
+            multi = pyma_decorators.MultiFunction(name)
+        multi.register(pattern, f)
+        return multi
+
+    return decorate
 
 
 def pyma_exec(source: str, filename: str = '<string>', module=None):

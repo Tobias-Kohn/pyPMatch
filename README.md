@@ -81,7 +81,38 @@ def test_me():
 ```
 
 
-## Writing Patterns
+#### Decorate Functions
+
+> _This feature is not implemented, yet._
+
+If you do not want _PyMa_ to mess with your code, you can still use the pattern matching in the form of function
+decorators.  You put the pattern as a string into the decorator.  The function itself then takes the variables of the
+pattern as parameters.
+
+```python
+from pyma import case
+
+@case("17")
+def test_me():
+    print("Everything's OK")
+
+@case("11 | 13 | 17 | 19")
+def test_me():
+    print("At least, it's still a prime number")
+
+@case("i @ int()")
+def test_me(i):
+    print("The result", i, "is wrong")
+
+@case("x")
+def test_me(x):
+    print("Not even an integer?", x)
+
+test_me(sum([2, 3, 5, 7]))
+```
+
+
+## How To Write Patterns
 
 Patterns can be expressed using the elements described below.
 
@@ -130,8 +161,6 @@ There are some special cases, and limitations you should be aware of:
   
 #### Roadmap
 
-- Support for lists, tuples, iterators, etc.  Must be (mostly) compatible with Python's current iterable unpacking 
-  syntax `a, b, *c = X`
 - Full support for regular expressions and string matching
 - Further narrow the translation/compiling of `case` statements to where it is clearly meant to be one
 - Pattern matching through function decorators
