@@ -2,13 +2,14 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 24.08.2018
+# Updated: 27.08.2018
 #
 # License: Apache 2.0
 #
 import builtins, inspect, os.path, types
 from . import syntax_support
 from . import pyma_decorators
+from .match_template import MatchException
 
 
 def case(pattern: str):

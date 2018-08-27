@@ -168,7 +168,6 @@ There are some special cases, and limitations you should be aware of:
 - Full support for regular expressions and string matching
 - Further narrow the translation/compiling of `case` statements to where it is clearly meant to be one
 - Pattern matching through function decorators
-- Raise error if no match is found
 - Test suites
 - Documentation, tutorials
 

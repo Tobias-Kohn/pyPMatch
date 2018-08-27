@@ -2,10 +2,16 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 17.08.2018
-# Updated: 23.08.2018
+# Updated: 27.08.2018
 #
 # License: Apache 2.0
 #
+import inspect
+
+
+class MatchException(Exception): pass
+
+
 def unapply(obj, cls):
     """
     Checks if the given object `obj` is an instance of class `cls`, and then tries to extract values for the fields.
@@ -80,7 +86,7 @@ def unapply(obj, cls):
     return None
 
 
-class MatchException(Exception): pass
+class SkipMatchException(Exception): pass
 
 
 class MatchGuard(type):
@@ -88,7 +94,7 @@ class MatchGuard(type):
     def __setattr__(self, key, value):
         if key == 'guard':
             if not value:
-                raise MatchException()
+                raise SkipMatchException()
         else:
             super().__setattr__(key, value)
 
@@ -105,7 +111,16 @@ class Match(metaclass=MatchGuard):
         return [self.value, False]
 
     def __exit__(self, exc_type, exc_value, traceback):
-        return exc_type is MatchException or exc_type is None
+        result = exc_type is SkipMatchException or exc_type is None
+        if result:
+            try:
+                frame = inspect.currentframe().f_back
+                value, handled = frame.f_locals['__matchvalue__']
+            except:
+                value, handled = None, True
+            if not handled:
+                raise MatchException(f"no matching pattern found for {repr(value)}")
+        return result
 
 
 class CaseManager(metaclass=MatchGuard):
@@ -118,7 +133,7 @@ class CaseManager(metaclass=MatchGuard):
         self._value = value
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type is MatchException or exc_type is None:
+        if exc_type is SkipMatchException or exc_type is None:
             if self._guard:
                 self._value_item[1] = True
             return True
