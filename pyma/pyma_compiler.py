@@ -206,6 +206,15 @@ class Compiler(ast.NodeVisitor):
             code.append("return True")
         return self.make_method(code)
 
+    def visit_Dict(self, node: ast.Dict):
+        code = []
+        for key, value in zip(node.keys, node.values):
+            cond = self.visit(value)
+            code.append(f"v = node.get({repr(key.value)}, _NO_VALUE_)")
+            code.append(f"if v is _NO_VALUE_ or not {cond.format('v')}: return False")
+        code.append("return True")
+        return self.make_method(code)
+
     def visit_RegularExpression(self, node: pyma_ast.RegularExpression):
         code = [
             "import re",

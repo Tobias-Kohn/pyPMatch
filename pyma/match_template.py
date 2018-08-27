@@ -12,6 +12,9 @@ import inspect
 class MatchException(Exception): pass
 
 
+_NO_VALUE_ = object()
+
+
 def unapply(obj, cls):
     """
     Checks if the given object `obj` is an instance of class `cls`, and then tries to extract values for the fields.

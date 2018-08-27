@@ -281,6 +281,23 @@ class PatternParser(ast.NodeTransformer):
     def visit_Deconstructor(self, node: pyma_ast.Deconstructor):
         return node
 
+    def visit_Dict(self, node: ast.Dict):
+        if len(node.keys) == 0:
+            raise self._syntax_error("empty dict makes no sense here", node)
+        keys = []
+        for key in node.keys:
+            if isinstance(key, ast.Str):
+                value = key.s
+            elif isinstance(key, ast.Num):
+                value = key.n
+            elif isinstance(key, ast.NameConstant):
+                value = key.value
+            else:
+                raise self._syntax_error("only keys of type 'str' or 'int' are supported in dicts", node)
+            keys.append(_cl(ast.Constant(value=value), key))
+        values = [self.visit(item) for item in node.values]
+        return _cl(ast.Dict(keys=keys, values=values), node)
+
     def visit_Ellipsis(self, node: ast.Ellipsis):
         return _cl(pyma_ast.Wildcard(is_seq=True), node)
 

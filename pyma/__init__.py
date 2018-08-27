@@ -65,4 +65,5 @@ def pyma_translate(source: str):
     code of the auxiliary `__match__` module.
     """
     # TODO: implement and test
+    raise NotImplementedError("'pyma_translate' is not implemented, yet")
     return '', ''
