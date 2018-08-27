@@ -52,9 +52,13 @@ def unapply(obj, cls):
             return result
 
     if isinstance(obj, cls):
-        # primitive types are not really deconstructable, but should always register as a match
+        # Primitive types are not really deconstructable, but should always register as a match.
+        # By returning the object itself as its only argument, we allow the "type check" to be combined
+        # with further checks.  Say, you want to make sure you have dictionary with a key `foo`, you can
+        # write: `dict({ 'foo': _ })`.  Note that `{ 'foo': _ }` will, in contrast, only check if the
+        # given value has a key `'foo'`, but there is no check for its type at all.
         if cls in (bool, bytearray, bytes, complex, dict, float, frozenset, int, list, set, str, tuple):
-            return ()
+            return (obj,)
 
         fields = getattr(cls, '_fields', None)
         if isinstance(fields, tuple):

@@ -292,6 +292,8 @@ class PatternParser(ast.NodeTransformer):
                 value = key.n
             elif isinstance(key, ast.NameConstant):
                 value = key.value
+            elif isinstance(key, ast.Tuple) and all([isinstance(elt, ast.Num) for elt in key.elts]):
+                value = tuple([elt.n for elt in key.elts])
             else:
                 raise self._syntax_error("only keys of type 'str' or 'int' are supported in dicts", node)
             keys.append(_cl(ast.Constant(value=value), key))
