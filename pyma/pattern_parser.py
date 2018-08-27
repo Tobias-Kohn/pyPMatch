@@ -231,6 +231,10 @@ class PatternParser(ast.NodeTransformer):
     def visit_Alternatives(self, node: pyma_ast.Alternatives):
         return node
 
+    def visit_Attribute(self, node: ast.Attribute):
+        name = _get_name(node)
+        return pyma_ast.Deconstructor(name, [])
+
     def visit_AttributeDestructor(self, node: pyma_ast.AttributeDeconstructor):
         return node
 
