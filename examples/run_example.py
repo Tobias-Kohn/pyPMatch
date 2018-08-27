@@ -8,9 +8,16 @@
 #
 from pyma import enable_auto_import
 
-# choose one of the examples here to run it...
-
+##############################################################
+#                                                            #
+#      Choose one of the examples here to run...             #
+#      =========================================             #
+#                                                            #
 # import pm_recursion as pm
-import pm_ast_simplify as pm
+# import pm_ast_simplify as pm
+import pm_extractors as pm
+#                                                            #
+#                                                            #
+##############################################################
 
 pm.main()

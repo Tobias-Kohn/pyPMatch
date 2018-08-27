@@ -31,7 +31,7 @@ def simplify(node):
             return node
 ```
 
-You will find more examples in the [examples folder](examples).
+You will find more examples in the [examples folder](examples); just run [run_example.py](examples/run_example.py).
 
 
 ## Usage
@@ -83,7 +83,7 @@ def test_me():
 
 #### Decorate Functions
 
-> _This feature is not implemented, yet._
+> _This feature is not fully implemented, yet._
 
 If you do not want _PyMa_ to mess with your code, you can still use the pattern matching in the form of function
 decorators.  You put the pattern as a string into the decorator.  The function itself then takes the variables of the
@@ -110,6 +110,10 @@ def test_me(x):
 
 test_me(sum([2, 3, 5, 7]))
 ```
+
+**NB:** _Using decorators is, after all, not a particularly good idea for this library.  The reason is that, in 
+contrast to pre-compiling modules, not all names can be properly resolved.  You might therefore end up with some
+surprises, or even crashes._ 
 
 
 ## How To Write Patterns
@@ -219,6 +223,18 @@ Python code.  No commends are removed, no lines inserted or deleted, and no vari
 
 In addition to `case` and `match`, _PyMa_ introduces two more names: `__match__`, and `__matchvalue__`, respectively.
 It is very unlikely, though, that your program uses either of these names.
+
+
+#### Why Yet Another Pattern Matching Proposal?
+
+There have been discussions about adding a `switch` statement, or even pattern matching to _Python_ before (see, e.g.,
+[PEP 3103](https://www.python.org/dev/peps/pep-3103/)).  Hence, _PyMa_ is not an new idea.  In contrast to most
+discussion I am aware of so far, this project differs in that my focus is not on the exact syntax, but more on getting
+the semantics right.  And, at the end of the day, I just needed (or let's say 'strongly desired') pattern matching 
+for other projects I am working on.
+
+As such, _PyMa_ shows how full pattern matching can be integrated with Python, but there is no claim whatsoever that 
+the syntax used here is the best possible alternative.
 
 
 #### Why Not Just Use Regular Expressions?
@@ -346,6 +362,7 @@ While _Scala_'s syntax and semantics are based on expressions, _Python_'s is not
 `if`, `for` etc. are, as a matter of fact, never expressions in Python, but clearly statements without proper value.
 Since both `match` and `case` statements, as implemented here, are obviously compound statements, it would feel very
 wrong for Python to try, and make them expressions.
+
 
 
 ## Contributors
