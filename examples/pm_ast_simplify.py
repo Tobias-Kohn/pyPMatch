@@ -14,6 +14,11 @@ except ImportError:
 
 
 class AstSimplifier(ast.NodeTransformer):
+    """
+    Simplifies an AST using pattern matching.  This is for demonstration purposes only; the output will not be
+    compileable because the returned nodes might lack proper `lineno` and `col_offset` fields (cf. `copy_location`
+    in the `ast` module).
+    """
 
     def generic_visit(self, node):
         match super().generic_visit(node):
@@ -29,6 +34,8 @@ class AstSimplifier(ast.NodeTransformer):
                 return ast.Num(a + b)
             case ast.BinOp(ast.Num(a), ast.Sub, ast.Num(b)):
                 return ast.Num(a - b)
+            case ast.BinOp(ast.Name(x), ast.Sub, ast.Name(y)) if x == y:
+                return ast.Num(0)
             case x:
                 return x
 
@@ -81,10 +88,12 @@ def simplify_and_print(program: str):
 
 
 
+# The program does not make much sense, but is rather a show case for the implemented optimisations/simplifications...
 _STD_PROGRAM = """
 def foo(x):
     y = x * (3 - 2) + (4 + (3 - 7)) + 3
-    return y + y * 0
+    z = x + (y - y)
+    return y + y * 0 + z
 """
 
 def main():

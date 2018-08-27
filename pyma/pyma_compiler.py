@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 23.08.2018
+# Updated: 27.08.2018
 #
 # License: Apache 2.0
 #
@@ -44,7 +44,8 @@ class Compiler(ast.NodeVisitor):
             f"class {name}(CaseManager):",
             self._create_init(),
             self._create_enter(),
-            self._create_test(cond, guard),
+            self._create_guard(guard),
+            self._create_test(cond, None if guard is None else 'self.test_guard()'),
         ]
         result += self.methods
         return '\n\n'.join(result) + '\n'
@@ -66,6 +67,25 @@ class Compiler(ast.NodeVisitor):
             result += "\t\treturn self._guard"
         return result
 
+    def _create_guard(self, guard: str):
+        if guard is None:
+            code = "\tdef test_gaurd(self):\n" \
+                   "\t\treturn True\n"
+            return code
+
+        code = ["\tdef test_guard(self):"]
+        self_name = 'self'
+        while self_name in self.sources:
+            self_name = '_' + self_name
+        if self_name != 'self':
+            code.append(f"\t\t{self_name} = self")
+        for src in self.sources:
+            code.append(f"\t\t{src} = {self_name}.source['{src}']")
+        for target in self.targets:
+            code.append(f"\t\t{target} = {self_name}.targets['{target}']")
+        code.append(f"\t\treturn {guard}")
+        return '\n'.join(code)
+
     def _create_init(self):
         targets = ', '.join([" '{}': None".format(name) for name in self.targets])
         result = "\tdef __init__(self, value, **source):\n" \
@@ -78,7 +98,7 @@ class Compiler(ast.NodeVisitor):
         result = f"\tdef test(self, node):\n" \
                  f"\t\tresult = {cond}\n"
         if guard is not None and guard != '':
-            result += "\t\tif not {guard}:\n" \
+            result += f"\t\tif result and not {guard}:\n" \
                       "\t\t\treturn False\n"
         result += "\t\treturn result"
         return result
