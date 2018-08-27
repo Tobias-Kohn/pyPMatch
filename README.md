@@ -4,8 +4,12 @@
 > are available at the moment.
 
 
-_PyMa_ provides **Pattern Matching** in _Python_.  It is mostly based on the pattern matching found in 
-[_Scala_](https://www.scala-lang.org/).
+_PyMa_ provides **Pattern Matching** in _Python_.  It is mostly based on _pattern matching_ as found in 
+[_Scala_](https://www.scala-lang.org/).  Its main objective is to deconstruct objects, and thereby check if any
+given object fulfills the criteria to be deconstructed in a particular way.
+
+This document gives a rough, unpolished overview of _PyMa_, and its abilities, as the primary efforts is currently
+directed towards the development of the library itself.  You also might want to check out the FAQ further down below.
 
 
 ## Example
@@ -57,7 +61,7 @@ pyma_exec(my_code)
 
 #### Import Code From Python Modules
 
-Yet, it is probably more convenient to install the auto import hook, so that all modules in your package/project are
+It is probably more convenient to install the auto import hook, so that all modules in your package/project are
 compiled using the _PyMa_-compiler (if they contain a `case` statement, that is).  The auto import is installed
 directly through the import of `enable_auto_import`.
 ```python
@@ -128,6 +132,8 @@ Patterns can be expressed using the elements described below.
 - `Foo(egg=A, ham=B)` matches all instances of `Foo`, where the attributes `egg`, and `ham` match the patterns
   `A` and `B`, respectively;
 - `12`, `'abc'`, `True` and other constant match a value if the value is equal to the constant;
+- `{ 'a': A, 'b': B }` matches if the value has an element `'a'`, as well as an element `'b'`, which match `A` and
+  `B`, respectively.  The value can be dictionary, but it does not have to be;
 - `{'RE'}` matches if the value is a string that conforms to the regular expression given;
 - `A | B | C` matches if at least one of the patterns `A`, `B`, `C` matches;
 - `[A, B, C, ..., D, E]` matches any sequence where the first three elements match `A`, `B`, and `C` and the last two 
@@ -224,7 +230,7 @@ In addition to `case` and `match`, _PyMa_ introduces two more names: `__match__`
 It is very unlikely, though, that your program uses either of these names.
 
 
-#### Why Yet Another Pattern Matching Proposal?
+#### Why Yet Another Pattern Matching Library/Proposal?
 
 There have been discussions about adding a `switch` statement, or even pattern matching to _Python_ before (see, e.g.,
 [PEP 3103](https://www.python.org/dev/peps/pep-3103/)).  Hence, _PyMa_ is not an new idea.  In contrast to most
@@ -362,6 +368,26 @@ While _Scala_'s syntax and semantics are based on expressions, _Python_'s is not
 Since both `match` and `case` statements, as implemented here, are obviously compound statements, it would feel very
 wrong for Python to try, and make them expressions.
 
+
+#### Why Do I Have to Use `case _` Instead Of `else`?
+
+The implementation of _PyMa_ is focused on minimising the rewriting of any Python code, or module.  It will only
+translate `case`, and `match`, statements where it is pretty certain that such a statement is meant in the first
+place, leaving all your code around it untouched.
+
+If we were to use `else`, this means that we would have to put a lot more effort in making sure that no `else` is
+replaced where it should remain, leading to longer and more complex code.  Moreover, the individual `case` statements
+in a `match` block are actually not linked, but stand as individual statements for themselves.  Using `else` raises 
+therefore a few additional questions concerning the semantics, which need proper answering.
+
+So, in short: using `else` would lead to a more brittle syntax with a quite few corner cases not covered.
+
+
+#### How About Some Proper Documentation?
+
+First priority is currently given to getting the library fully operational, and adding various test cases.  Once that
+is complete, documentation will follow (and, after all, there is already a rather long README with lots of information,
+as well as several examples).  If you have a specific question or concern, open an issue, or write to me directly.
 
 
 ## Contributors
