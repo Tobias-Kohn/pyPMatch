@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 27.08.2018
+# Updated: 29.08.2018
 #
 # License: Apache 2.0
 #
@@ -59,6 +59,26 @@ def is_seq_wildcard(node):
         return node.is_seq
     elif isinstance(node, pyma_ast.Binding):
         return is_seq_wildcard(node.value)
+    else:
+        return False
+
+
+def is_string_element(node):
+    if isinstance(node, (pyma_ast.RegularExpression, pyma_ast.RegularExprType)):
+        return True
+
+    elif isinstance(node, pyma_ast.Constant):
+        return type(node.value) is str
+
+    elif isinstance(node, pyma_ast.Binding):
+        return is_string_element(node.value)
+
+    elif isinstance(node, pyma_ast.Wildcard):
+        return True
+
+    elif isinstance(node, pyma_ast.Alternatives):
+        return all([is_string_element(elt) for elt in node.elts])
+
     else:
         return False
 
@@ -244,9 +264,11 @@ class PatternParser(ast.NodeTransformer):
     def visit_BinOp(self, node: ast.BinOp):
         op = node.op
         if isinstance(op, ast.Add):
-            # TODO: add proper support for string deconstructor
             elts = _flatten_op(node, ast.Add)
             elts = [self.visit(elt) for elt in elts]
+            for elt in elts:
+                if not is_string_element(elt):
+                    raise self._syntax_error(f"invalid element in string sequence: '{repr(elt)}'", node)
             return pyma_ast.StringDeconstructor(elts=elts)
 
         elif isinstance(op, ast.BitOr):
@@ -337,10 +359,11 @@ class PatternParser(ast.NodeTransformer):
 
             elif isinstance(elt, ast.Name):
                 name = elt.id
-                if name in ('float', 'int'):
+                if name in ('bool', 'float', 'int',
+                            'alnum', 'alpha', 'ascii', 'decimal', 'digit', 'identifier', 'lower',
+                            'numeric', 'printable', 'space', 'title', 'upper'):
                     return _cl(pyma_ast.RegularExprType(type_name=name), node)
-                elif name in ('name', 'whitespace'):
-                    # TODO: the 'name' currently only works correct in ASCII
+                elif name in ('name', 'whitespace', ):
                     value = {
                         'name':  r'[A-Za-z_]\w+',
                         'whitespace': r'\s+',

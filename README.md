@@ -11,6 +11,8 @@ given object fulfills the criteria to be deconstructed in a particular way.
 This document gives a rough, unpolished overview of _PyMa_, and its abilities, as the primary efforts is currently
 directed towards the development of the library itself.  You also might want to check out the FAQ further down below.
 
+_PyMa_ requires at least Python 3.4.
+
 
 ## Example
 

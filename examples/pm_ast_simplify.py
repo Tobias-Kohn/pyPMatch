@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 27.08.2018
-# Updated: 27.08.2018
+# Updated: 29.08.2018
 #
 # License: Apache 2.0
 #
@@ -59,8 +59,8 @@ def juxtapose(left, right):
         right = right.split('\n')
     else:
         right = right[:]
-    left = [line.replace('\t', '    ') for line in left]
-    right = [line.replace('\t', '    ') for line in right]
+    left = [line.expandtabs() for line in left]
+    right = [line.expandtabs() for line in right]
     m = max([len(line) for line in left]) + 2
     for i, line in enumerate(left):
         left[i] = line + ' ' * (m - len(line)) + '| '

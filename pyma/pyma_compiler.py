@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 27.08.2018
+# Updated: 29.08.2018
 #
 # License: Apache 2.0
 #
@@ -219,20 +219,34 @@ class Compiler(ast.NodeVisitor):
         code = [
             "import re",
             "if not isinstance(node, str): return False",
-            f"m = re.match({repr(node.pattern)}, node)",
-            "if m is None: return False",
-            "return m.end() == len(node)"
+            f"m = re.fullmatch({repr(node.pattern)}, node)",
+            "return m is not None"
         ]
         return self.make_method(code)
 
     def visit_RegularExprType(self, node: pyma_ast.RegularExprType):
-        code = [
-            "try:",
-            f"\t{node.type_name}(node)",
-            "\treturn True",
-            "except ValueError:",
-            "\treturn False"
-        ]
+        if node.type_name in ('float', 'int'):
+            code = [
+                "try:",
+                f"\t{node.type_name}(node)",
+                "\treturn True",
+                "except ValueError:",
+                "\treturn False"
+            ]
+        elif node.type_name == 'bool':
+            code = [
+                "if isinstance(node, (bool, int)): return True",
+                "if isinstance(node, str):",
+                "\treturn node.lower() in ('0', '1', 'false', 'true')",
+                "return False"
+            ]
+        else:
+            code = [
+                "if isinstance(node, str):",
+                f"\treturn node.is{node.type_name}",
+                "else:",
+                "\treturn False"
+            ]
         return self.make_method(code)
 
     def visit_SequencePattern(self, node: pyma_ast.SequencePattern):
@@ -285,7 +299,60 @@ class Compiler(ast.NodeVisitor):
         code.append("\treturn False")
         return self.make_method(code)
 
+    def visit_StringDeconstructor(self, node: pyma_ast.StringDeconstructor):
+        raise NotImplementedError("this feature is currently under development and not implemented yet")
+        code = ["import re",
+                "i = 0",
+                "try:"]
+        for elt in node.elts:
+            cond = self.visit_str(elt).format('node[i:]')
+            code.append(f"\t(s, e) = {cond}")
+            code.append("\tif s is None or e is None: return False")
+        code.append("\treturn True")
+        code.append("except:")
+        code.append("\treturn False")
+        return self.make_method(code)
+
     def visit_Wildcard(self, node: pyma_ast.Wildcard):
         if node.is_seq:
             raise self._syntax_error("unexpected sequence wildcard", node)
         return "True"
+
+
+    def visit_str(self, node):
+        name = "visit_str_" + node.__class__.__name__
+        method = getattr(self, name, None)
+        return method(node)
+
+    def visit_str_Alternatives(self, node: pyma_ast.Alternatives):
+        code = []
+        return self.make_method(code)
+
+    def visit_str_Constant(self, node: pyma_ast.Constant):
+        s = node.value
+        code = [
+            f"idx = node.find({repr(s)})",
+            "if idx >= 0:",
+            f"\treturn (idx, idx + {len(s)})",
+            "else:",
+            "\treturn (None, None)"
+        ]
+        return self.make_method(code)
+
+    def visit_str_RegularExpression(self, node: pyma_ast.RegularExpression):
+        code = [
+            "import re",
+            f"m = re.search({repr(node.pattern)}, node)",
+            "return (None, None) if m is None else (m.start(), m.end())",
+        ]
+        return self.make_method(code)
+
+    def visit_str_RegularExprType(self, node: pyma_ast.RegularExprType):
+        pass
+
+    def visit_str_StringDeconstructor(self, node: pyma_ast.StringDeconstructor):
+        pass
+
+    def visit_str_Wildcard(self, node: pyma_ast.Wildcard):
+        pass
+
