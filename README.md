@@ -136,6 +136,8 @@ Patterns can be expressed using the elements described below.
   `B`, respectively.  The value can be dictionary, but it does not have to be.  You can also check for specific
   elements within a list, say, using `{ 2: A, 5: B }`;
 - `{'RE'}` matches if the value is a string that conforms to the regular expression given;
+- `{foo}` matches any value _V_ of type string, for which `V.isfoo()` evaluates to `True`.  For instance, `{lower}` 
+  will match any string for which `V.islower()` is true;
 - `A | B | C` matches if at least one of the patterns `A`, `B`, `C` matches;
 - `[A, B, C, ..., D, E]` matches any sequence where the first three elements match `A`, `B`, and `C` and the last two 
   elements match `D`, and `E`, respectively.  This also includes Python's usual iterator unpacking, such as 

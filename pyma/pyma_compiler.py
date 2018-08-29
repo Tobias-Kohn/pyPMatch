@@ -69,7 +69,7 @@ class Compiler(ast.NodeVisitor):
 
     def _create_guard(self, guard: str):
         if guard is None:
-            code = "\tdef test_gaurd(self):\n" \
+            code = "\tdef test_guard(self):\n" \
                    "\t\treturn True\n"
             return code
 
@@ -237,7 +237,7 @@ class Compiler(ast.NodeVisitor):
             code = [
                 "if isinstance(node, (bool, int)): return True",
                 "if isinstance(node, str):",
-                "\treturn node.lower() in ('0', '1', 'false', 'true')",
+                "\treturn node.lower() in ('false', 'true')",
                 "return False"
             ]
         else:

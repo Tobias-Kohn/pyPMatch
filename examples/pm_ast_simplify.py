@@ -52,11 +52,11 @@ def juxtapose(left, right):
     a generally useable function.
     """
     if type(left) is str:
-        left = left.split('\n')
+        left = left.splitlines()
     else:
         left = left[:]
     if type(right) is str:
-        right = right.split('\n')
+        right = right.splitlines()
     else:
         right = right[:]
     left = [line.expandtabs() for line in left]
