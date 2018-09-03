@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 22.08.2018
-# Updated: 23.08.2018
+# Updated: 03.09.2018
 #
 # License: Apache 2.0
 #
@@ -14,6 +14,7 @@ from other packages in your system.
 """
 from importlib.abc import Loader, MetaPathFinder
 from importlib.machinery import ModuleSpec
+from os.path import normpath
 import sys
 
 
@@ -47,7 +48,7 @@ class PyMa_Finder(MetaPathFinder):
 
     def __init__(self, base_path: str):
         super().__init__()
-        self._base_path = base_path
+        self._base_path = normpath(base_path)
         self._path_finder = _get_original_path_finder()
 
     def find_spec(self, fullname, path, target = None):
@@ -55,8 +56,7 @@ class PyMa_Finder(MetaPathFinder):
             result = self._path_finder.find_spec(fullname, path, target)
             try:
                 # TODO: Check if the file contains a `case` in the first place
-                # TODO: This test does not work under Windows, because some paths use '\' and others use '/'
-                if result.origin.startswith(self._base_path):
+                if normpath(result.origin).startswith(self._base_path):
                     return ModuleSpec(result.origin, PyMa_Loader(result.origin))
             except:
                 pass
