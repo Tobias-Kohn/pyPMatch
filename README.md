@@ -178,7 +178,6 @@ There are some special cases, and limitations you should be aware of:
 #### Roadmap
 
 - Full support for regular expressions and string matching
-- Further narrow the translation/compiling of `case` statements to where it is clearly meant to be one
 - Test suites
 - Documentation, tutorials
 

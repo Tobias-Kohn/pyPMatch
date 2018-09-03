@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 23.08.2018
+# Updated: 03.09.2018
 #
 # License: Apache 2.0
 #
@@ -85,11 +85,13 @@ class SequencePattern(ast.expr):
 
 class StringDeconstructor(ast.expr):
 
-    def __init__(self, elts: list):
+    def __init__(self, groups: list, fixed_start: bool, targets: list):
         super().__init__()
-        self.elts = elts
+        self.groups = groups
+        self.fixed_start = fixed_start
+        self.targets = targets
 
-    _fields = ('elts',)
+    _fields = ('groups', 'fixed_start', 'targets')
 
 
 class Wildcard(ast.expr):

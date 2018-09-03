@@ -299,19 +299,41 @@ class Compiler(ast.NodeVisitor):
         code.append("\treturn False")
         return self.make_method(code)
 
-    def visit_StringDeconstructor(self, node: pyma_ast.StringDeconstructor):
-        raise NotImplementedError("this feature is currently under development and not implemented yet")
-        code = ["import re",
-                "i = 0",
-                "try:"]
-        for elt in node.elts:
-            cond = self.visit_str(elt).format('node[i:]')
-            code.append(f"\t(s, e) = {cond}")
-            code.append("\tif s is None or e is None: return False")
-        code.append("\treturn True")
-        code.append("except:")
-        code.append("\treturn False")
+    def _handle_str_group_fixed(self, group: list):
+        if len(group) == 1:
+            return self.visit_str(group[0]).format("node[i:]")
+
+        else:
+            code = [ "i = 0" ]
+            for item in group:
+                s = "j = {}".format(self.visit_str(item).format("node[i:]"))
+                code.append(s)
+                code.append("if j is None: return None")
+                code.append("i += j")
+            code.append("return i")
+            return self.make_method(code)
+
+    def _handle_str_group_find(self, group: list):
+        node = group[0]
+        if len(group) == 1 and isinstance(node,
+                                          (pyma_ast.Constant, pyma_ast.RegularExpression, pyma_ast.RegularExprType)):
+            return self.visit_str(node)
+
+        item = self._handle_str_group_fixed(group)
+        code = [
+            "i = 0",
+            "while i < len(node):",
+            f"\tk = {item}",
+            "\tif k is not None:",
+            "\t\treturn (i, i+k)",
+            "\ti += 1",
+            "return None"
+        ]
         return self.make_method(code)
+
+
+    def visit_StringDeconstructor(self, node: pyma_ast.StringDeconstructor):
+        return self.visit_str_StringDeconstructor(node) + " is not None"
 
     def visit_Wildcard(self, node: pyma_ast.Wildcard):
         if node.is_seq:
@@ -335,7 +357,7 @@ class Compiler(ast.NodeVisitor):
             "if idx >= 0:",
             f"\treturn (idx, idx + {len(s)})",
             "else:",
-            "\treturn (None, None)"
+            "\treturn None"
         ]
         return self.make_method(code)
 
@@ -343,16 +365,54 @@ class Compiler(ast.NodeVisitor):
         code = [
             "import re",
             f"m = re.search({repr(node.pattern)}, node)",
-            "return (None, None) if m is None else (m.start(), m.end())",
+            "return None if m is None else (m.start(), m.end())",
         ]
         return self.make_method(code)
 
     def visit_str_RegularExprType(self, node: pyma_ast.RegularExprType):
-        pass
+        if node.type_name in ('float', 'int'):
+            pass
+
+        elif node.type_name in ('bool',):
+            pass
+
+        else:
+            code = [
+                "if isinstance(node, str):",
+                "\ti = 0",
+                f"\twhile i < len(node) and node[i].is{node.type_name}():",
+                "\t\ti += 1",
+                "\treturn (0, i)"
+                "return (None, None)",
+            ]
+            return self.make_method(code)
 
     def visit_str_StringDeconstructor(self, node: pyma_ast.StringDeconstructor):
-        pass
+        code = [
+            "i = 0",
+            "try:"
+        ]
+        for i, item in enumerate(node.groups):
+            if i == 0 and node.fixed_start:
+                code.append("\ti = " + self._handle_str_group_fixed(node.groups[0])).format("node")
+            elif i < len(node.names) and node.names[i] is not None:
+                name = node.names[i]
+                code.extend([
+                    "\tj, k = " + self._handle_str_group_find(item).format("node[i:"),
+                    f"\tself.targets['{name}'] = node[i:j]",
+                    "\ti = k"
+                ])
+            else:
+                code.append("\tj, i = " + self._handle_str_group_find(item).format("node[i:"))
+
+        code.extend([
+            "\treturn i",
+            "except:",
+            "\treturn None"
+        ])
+        return self.make_method(code)
 
     def visit_str_Wildcard(self, node: pyma_ast.Wildcard):
-        pass
-
+        if node.is_seq:
+            raise self._syntax_error("unexpected sequence wildcard", node)
+        return "(0, 1) if len({}) > 0 else None"

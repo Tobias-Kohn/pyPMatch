@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 29.08.2018
+# Updated: 03.09.2018
 #
 # License: Apache 2.0
 #
@@ -207,14 +207,11 @@ class PatternParser(ast.NodeTransformer):
         for elt in elts:
             if is_seq_wildcard(elt):
                 sub_seqs.append([])
-                if isinstance(elt, pyma_ast.Binding):
-                    names.append(elt.target)
-                else:
-                    names.append(None)
+                names.append(elt.target if isinstance(elt, pyma_ast.Binding) else None)
             else:
                 sub_seqs[-1].append(elt)
 
-        while[-1] is None:
+        while names[-1] is None:
             del names[-1]
 
         left = sub_seqs[0]
@@ -248,6 +245,45 @@ class PatternParser(ast.NodeTransformer):
         min_length = len(left) + len(right) + sum([len(item) for item in sub_seqs])
         return _cl(pyma_ast.SequencePattern(left, right, sub_seqs, names, min_length, None), node)
 
+    def _handle_str_seq(self, node, elts: list):
+        elts = [self.visit(elt) for elt in elts]
+        for elt in elts:
+            if not is_string_element(elt):
+                raise self._syntax_error(f"invalid element in string sequence: '{repr(elt)}'", node)
+        names = [ None ]
+        sub_seqs = [[]]
+        for elt in elts:
+            if is_seq_wildcard(elt):
+                sub_seqs.append([])
+                names.append(elt.target if isinstance(elt, pyma_ast.Binding) else None)
+            else:
+                sub_seqs[-1].append(elt)
+
+        while names[-1] is None:
+            del names[-1]
+
+        # Check for possible errors such as two adjacent wildcard sequences
+        for i, item in enumerate(sub_seqs):
+            # An empty sub-sequence cannot be matched unambiguously
+            if len(item) == 0 and i > 0:
+                raise self._syntax_error("invalid wildcards in sequence", node)
+            # The first and last item of a sequence cannot be plain wildcards
+            if isinstance(item[0], pyma_ast.Wildcard) or isinstance(item[-1], pyma_ast.Wildcard):
+                raise self._syntax_error("invalid wildcards in sequence", node)
+            # If there are only wildcards here, we cannot identify the sub-sequence later on
+            if all(is_wildcard(elt) for elt in item):
+                raise self._syntax_error("invalid wildcards in sequence", node)
+
+        fixed_start = len(sub_seqs[0]) > 0
+        if not fixed_start:
+            del sub_seqs[0]
+            if len(names) > 0:
+                del names[0]
+            if len(sub_seqs) == 0:
+                raise self._syntax_error("invalid string sequence", node)
+
+        return pyma_ast.StringDeconstructor(groups=sub_seqs, fixed_start=fixed_start, targets=names)
+
     def visit_Alternatives(self, node: pyma_ast.Alternatives):
         return node
 
@@ -265,11 +301,7 @@ class PatternParser(ast.NodeTransformer):
         op = node.op
         if isinstance(op, ast.Add):
             elts = _flatten_op(node, ast.Add)
-            elts = [self.visit(elt) for elt in elts]
-            for elt in elts:
-                if not is_string_element(elt):
-                    raise self._syntax_error(f"invalid element in string sequence: '{repr(elt)}'", node)
-            return pyma_ast.StringDeconstructor(elts=elts)
+            return self._handle_str_seq(node, elts)
 
         elif isinstance(op, ast.BitOr):
             elts = _flatten_op(node, ast.BitOr)
