@@ -19,6 +19,12 @@ import sys
 
 
 def _get_original_path_finder():
+    """
+    Try and return Python's `PathFinder`, which is responsible for importing non-builtin modules.  If it can't be
+    found, the function returns `None`.
+
+    Our own import hook uses the original `PathFinder` under the hood, and delegates whatever it can to it.
+    """
     for item in sys.meta_path:
         try:
             if item.__name__ == 'PathFinder':
@@ -26,6 +32,32 @@ def _get_original_path_finder():
         except:
             pass
     return None
+
+
+def _has_case_statement(path):
+    """
+    Check if the file possibly contains a `case` statement at all.  There is a slight chance that the result might
+    be wrong in that the function could return `True` for a file containing the word `case` in a position that looks
+    like a statement, but is not.
+
+    Our import hook tries to import/compiler only files it has to, i. e. containing a `case` statement.  Everything
+    else should be left alone.  The function `_has_case_statement` is used to check if a file needs to be imported by
+    our import hook.
+    """
+    try:
+        with open(path) as f:
+            for line in f.readlines():
+                stripped_line = line.lstrip()
+                if stripped_line.startswith('case') and len(stripped_line) > 4 and not stripped_line[4].isidentifier():
+                    s = stripped_line[4:].lstrip()
+                    if len(s) == 0 or s[0] in ('=', ',', ';', '.'):
+                        continue
+                    if len(s) > 1 and s[1] == '=' and not s[0].isalnum():
+                        continue
+                    return True
+    except:
+        pass
+    return False
 
 
 class PyMa_Loader(Loader):
@@ -55,8 +87,8 @@ class PyMa_Finder(MetaPathFinder):
         if self._path_finder:
             result = self._path_finder.find_spec(fullname, path, target)
             try:
-                # TODO: Check if the file contains a `case` in the first place
-                if normpath(result.origin).startswith(self._base_path):
+                name = normpath(result.origin)
+                if name.startswith(self._base_path) and _has_case_statement(name):
                     return ModuleSpec(result.origin, PyMa_Loader(result.origin))
             except:
                 pass
