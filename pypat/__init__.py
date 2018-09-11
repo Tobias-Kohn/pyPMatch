@@ -8,7 +8,7 @@
 #
 import builtins, inspect, os.path, types
 from . import syntax_support
-from . import pyma_decorators
+from . import pypat_decorators
 from .match_template import MatchException
 
 
@@ -27,8 +27,8 @@ def case(pattern: str):
         name = f.__code__.co_name
         frame = inspect.currentframe().f_back
         multi = frame.f_locals.get(name, None)
-        if not isinstance(multi, pyma_decorators.MultiFunction):
-            multi = pyma_decorators.MultiFunction(name, frame.f_code.co_filename)
+        if not isinstance(multi, pypat_decorators.MultiFunction):
+            multi = pypat_decorators.MultiFunction(name, frame.f_code.co_filename)
         multi.register(frame, pattern, f)
         return multi
 

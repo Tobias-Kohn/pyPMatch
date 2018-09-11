@@ -7,7 +7,7 @@
 # License: Apache 2.0
 #
 import datetime, io, os.path, tokenize, types
-from . import pyma_compiler
+from . import pypat_compiler
 
 
 class CaseStatement(object):
@@ -186,7 +186,7 @@ class TextScanner(object):
     def __init__(self, filename: str, source_text: str):
         self.filename = filename
         self.source = source_text
-        self.compiler = pyma_compiler.Compiler(filename, source_text)
+        self.compiler = pypat_compiler.Compiler(filename, source_text)
         self._token_list = list(tokenize.tokenize(io.BytesIO(self.source.encode('utf-8')).readline))
         self._statements = []
         self._line_starts = [0]

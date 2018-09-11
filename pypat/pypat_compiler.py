@@ -7,7 +7,7 @@
 # License: Apache 2.0
 #
 import ast
-from . import pyma_ast
+from . import pypat_ast
 from . import pattern_parser
 
 
@@ -136,12 +136,12 @@ class Compiler(ast.NodeVisitor):
     def generic_visit(self, node):
         raise SystemError(f"unexpected node in pattern matching: '{ast.dump(node)}'")
 
-    def visit_Alternatives(self, node: pyma_ast.Alternatives):
-        if all(isinstance(elt, pyma_ast.Constant) for elt in node.elts):
+    def visit_Alternatives(self, node: pypat_ast.Alternatives):
+        if all(isinstance(elt, pypat_ast.Constant) for elt in node.elts):
             return f"{{}} in ({', '.join([repr(elt.value) for elt in node.elts])})"
 
         code = []
-        if all(isinstance(elt, (pyma_ast.AttributeDeconstructor, pyma_ast.Deconstructor)) for elt in node.elts):
+        if all(isinstance(elt, (pypat_ast.AttributeDeconstructor, pypat_ast.Deconstructor)) for elt in node.elts):
             names = set()
             for elt in node.elts:
                 if type(elt.name) is str:
@@ -151,7 +151,7 @@ class Compiler(ast.NodeVisitor):
                         names.add(n)
 
             test = f"isinstance({{}}, {self.use_name(names)})"
-            if all(isinstance(elt, pyma_ast.Deconstructor) and len(elt.args) == 0 for elt in node.elts):
+            if all(isinstance(elt, pypat_ast.Deconstructor) and len(elt.args) == 0 for elt in node.elts):
                 return test
             code.append(f"if not {test.format('node')}: return False")
 
@@ -162,7 +162,7 @@ class Compiler(ast.NodeVisitor):
         self.alternative_lock -= 1
         return self.make_method(code)
 
-    def visit_AttributeDeconstructor(self, node: pyma_ast.AttributeDeconstructor):
+    def visit_AttributeDeconstructor(self, node: pypat_ast.AttributeDeconstructor):
         code = [
             f"if not isinstance(node, {self.use_name(node.name)}): return False",
         ]
@@ -172,7 +172,7 @@ class Compiler(ast.NodeVisitor):
         code.append("return True")
         return self.make_method(code)
 
-    def visit_Binding(self, node: pyma_ast.Binding):
+    def visit_Binding(self, node: pypat_ast.Binding):
         self.check_target(node.target, node)
         cond = self.visit(node.value)
         code = [
@@ -181,10 +181,10 @@ class Compiler(ast.NodeVisitor):
         ]
         return self.make_method(code)
 
-    def visit_Constant(self, node: pyma_ast.Constant):
+    def visit_Constant(self, node: pypat_ast.Constant):
         return f"{{}} == {repr(node.value)}"
 
-    def visit_Deconstructor(self, node: pyma_ast.Deconstructor):
+    def visit_Deconstructor(self, node: pypat_ast.Deconstructor):
         if len(node.args) == 0:
             return f"(unapply({{}}, {self.use_name(node.name)}) is not None)"
 
@@ -215,7 +215,7 @@ class Compiler(ast.NodeVisitor):
         code.append("return True")
         return self.make_method(code)
 
-    def visit_RegularExpression(self, node: pyma_ast.RegularExpression):
+    def visit_RegularExpression(self, node: pypat_ast.RegularExpression):
         code = [
             "import re",
             "if not isinstance(node, str): return False",
@@ -224,7 +224,7 @@ class Compiler(ast.NodeVisitor):
         ]
         return self.make_method(code)
 
-    def visit_RegularExprType(self, node: pyma_ast.RegularExprType):
+    def visit_RegularExprType(self, node: pypat_ast.RegularExprType):
         if node.type_name in ('float', 'int'):
             code = [
                 "try:",
@@ -249,7 +249,7 @@ class Compiler(ast.NodeVisitor):
             ]
         return self.make_method(code)
 
-    def visit_SequencePattern(self, node: pyma_ast.SequencePattern):
+    def visit_SequencePattern(self, node: pypat_ast.SequencePattern):
         code = [ "try:" ]
 
         if node.exact_length is not None:
@@ -316,7 +316,7 @@ class Compiler(ast.NodeVisitor):
     def _handle_str_group_find(self, group: list):
         node = group[0]
         if len(group) == 1 and isinstance(node,
-                                          (pyma_ast.Constant, pyma_ast.RegularExpression, pyma_ast.RegularExprType)):
+                                          (pypat_ast.Constant, pypat_ast.RegularExpression, pypat_ast.RegularExprType)):
             return self.visit_str(node)
 
         item = self._handle_str_group_fixed(group)
@@ -332,10 +332,10 @@ class Compiler(ast.NodeVisitor):
         return self.make_method(code)
 
 
-    def visit_StringDeconstructor(self, node: pyma_ast.StringDeconstructor):
+    def visit_StringDeconstructor(self, node: pypat_ast.StringDeconstructor):
         return self.visit_str_StringDeconstructor(node) + " is not None"
 
-    def visit_Wildcard(self, node: pyma_ast.Wildcard):
+    def visit_Wildcard(self, node: pypat_ast.Wildcard):
         if node.is_seq:
             raise self._syntax_error("unexpected sequence wildcard", node)
         return "True"
@@ -346,11 +346,11 @@ class Compiler(ast.NodeVisitor):
         method = getattr(self, name, None)
         return method(node)
 
-    def visit_str_Alternatives(self, node: pyma_ast.Alternatives):
+    def visit_str_Alternatives(self, node: pypat_ast.Alternatives):
         code = []
         return self.make_method(code)
 
-    def visit_str_Constant(self, node: pyma_ast.Constant):
+    def visit_str_Constant(self, node: pypat_ast.Constant):
         s = node.value
         code = [
             f"idx = node.find({repr(s)})",
@@ -361,7 +361,7 @@ class Compiler(ast.NodeVisitor):
         ]
         return self.make_method(code)
 
-    def visit_str_RegularExpression(self, node: pyma_ast.RegularExpression):
+    def visit_str_RegularExpression(self, node: pypat_ast.RegularExpression):
         code = [
             "import re",
             f"m = re.search({repr(node.pattern)}, node)",
@@ -369,7 +369,7 @@ class Compiler(ast.NodeVisitor):
         ]
         return self.make_method(code)
 
-    def visit_str_RegularExprType(self, node: pyma_ast.RegularExprType):
+    def visit_str_RegularExprType(self, node: pypat_ast.RegularExprType):
         if node.type_name in ('float', 'int'):
             pass
 
@@ -387,7 +387,7 @@ class Compiler(ast.NodeVisitor):
             ]
             return self.make_method(code)
 
-    def visit_str_StringDeconstructor(self, node: pyma_ast.StringDeconstructor):
+    def visit_str_StringDeconstructor(self, node: pypat_ast.StringDeconstructor):
         code = [
             "i = 0",
             "try:"
@@ -412,7 +412,7 @@ class Compiler(ast.NodeVisitor):
         ])
         return self.make_method(code)
 
-    def visit_str_Wildcard(self, node: pyma_ast.Wildcard):
+    def visit_str_Wildcard(self, node: pypat_ast.Wildcard):
         if node.is_seq:
             raise self._syntax_error("unexpected sequence wildcard", node)
         return "(0, 1) if len({}) > 0 else None"

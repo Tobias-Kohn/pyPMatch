@@ -7,7 +7,7 @@
 # License: Apache 2.0
 #
 import ast
-from . import pyma_ast
+from . import pypat_ast
 
 
 _cl = ast.copy_location
@@ -55,28 +55,28 @@ def _is_same_const_type(nodeA, nodeB):
 
 
 def is_seq_wildcard(node):
-    if isinstance(node, pyma_ast.Wildcard):
+    if isinstance(node, pypat_ast.Wildcard):
         return node.is_seq
-    elif isinstance(node, pyma_ast.Binding):
+    elif isinstance(node, pypat_ast.Binding):
         return is_seq_wildcard(node.value)
     else:
         return False
 
 
 def is_string_element(node):
-    if isinstance(node, (pyma_ast.RegularExpression, pyma_ast.RegularExprType)):
+    if isinstance(node, (pypat_ast.RegularExpression, pypat_ast.RegularExprType)):
         return True
 
-    elif isinstance(node, pyma_ast.Constant):
+    elif isinstance(node, pypat_ast.Constant):
         return type(node.value) is str
 
-    elif isinstance(node, pyma_ast.Binding):
+    elif isinstance(node, pypat_ast.Binding):
         return is_string_element(node.value)
 
-    elif isinstance(node, pyma_ast.Wildcard):
+    elif isinstance(node, pypat_ast.Wildcard):
         return True
 
-    elif isinstance(node, pyma_ast.Alternatives):
+    elif isinstance(node, pypat_ast.Alternatives):
         return all([is_string_element(elt) for elt in node.elts])
 
     else:
@@ -84,9 +84,9 @@ def is_string_element(node):
 
 
 def is_wildcard(node):
-    if isinstance(node, pyma_ast.Wildcard):
+    if isinstance(node, pypat_ast.Wildcard):
         return True
-    elif isinstance(node, pyma_ast.Binding):
+    elif isinstance(node, pypat_ast.Binding):
         return is_wildcard(node.value)
     else:
         return False
@@ -116,16 +116,16 @@ class PatternParser(ast.NodeTransformer):
 
     def make_binding(self, target, value):
         if isinstance(value, ast.Name):
-            value = pyma_ast.Deconstructor(name=value.id, args=[])
+            value = pypat_ast.Deconstructor(name=value.id, args=[])
 
         if isinstance(target, ast.Name):
             name = target.id
             if name == '_':
                 return value
-            elif isinstance(value, pyma_ast.Binding):
+            elif isinstance(value, pypat_ast.Binding):
                 raise self._syntax_error("binding value to more than one name", value)
             else:
-                return pyma_ast.Binding(name, value)
+                return pypat_ast.Binding(name, value)
 
         else:
             raise self._syntax_error("the target of a binding must be a valid name", target)
@@ -184,22 +184,22 @@ class PatternParser(ast.NodeTransformer):
 
         # Special case: `A|B|C` is interpreted as `A()|B()|C()`
         if all(isinstance(elt, ast.Name) for elt in elts):
-            elts = [pyma_ast.Deconstructor(elt.id, []) for elt in elts]
+            elts = [pypat_ast.Deconstructor(elt.id, []) for elt in elts]
         else:
             elts = [self.visit(elt) for elt in elts]
 
         # There are no wildcards or name bindings allowed
         if any(is_wildcard(elt) for elt in elts):
             raise self._syntax_error("wildcards not allowed in alternatives", node)
-        if any(isinstance(elt, pyma_ast.Binding) for elt in elts):
+        if any(isinstance(elt, pypat_ast.Binding) for elt in elts):
             raise self._syntax_error("bindings not allowed in alternatives", node)
 
-        return _cl(pyma_ast.Alternatives(elts=elts), node)
+        return _cl(pypat_ast.Alternatives(elts=elts), node)
 
     def _handle_seq(self, node):
         elts = [self.visit(elt) for elt in node.elts]
         if len(elts) == 0:
-            return _cl(pyma_ast.SequencePattern([], [], [], [], 0, 0), node)
+            return _cl(pypat_ast.SequencePattern([], [], [], [], 0, 0), node)
 
         # Split the sequence at each 'sequence wildcard'
         names = []
@@ -207,7 +207,7 @@ class PatternParser(ast.NodeTransformer):
         for elt in elts:
             if is_seq_wildcard(elt):
                 sub_seqs.append([])
-                names.append(elt.target if isinstance(elt, pyma_ast.Binding) else None)
+                names.append(elt.target if isinstance(elt, pypat_ast.Binding) else None)
             else:
                 sub_seqs[-1].append(elt)
 
@@ -218,8 +218,8 @@ class PatternParser(ast.NodeTransformer):
         del sub_seqs[0]
         if len(sub_seqs) == 0:
             exact_length = len(left) if len(left) == len(elts) else None
-            return _cl(pyma_ast.SequencePattern(left, [], [], [], len(left), exact_length), node)
-        if len(left) > 0 and isinstance(left[-1], pyma_ast.Wildcard):
+            return _cl(pypat_ast.SequencePattern(left, [], [], [], len(left), exact_length), node)
+        if len(left) > 0 and isinstance(left[-1], pypat_ast.Wildcard):
             raise self._syntax_error("invalid wildcards in sequence", node)
 
         if len(sub_seqs) > 0:
@@ -227,7 +227,7 @@ class PatternParser(ast.NodeTransformer):
             del sub_seqs[-1]
         else:
             right = []
-        if len(right) > 0 and isinstance(right[0], pyma_ast.Wildcard):
+        if len(right) > 0 and isinstance(right[0], pypat_ast.Wildcard):
             raise self._syntax_error("invalid wildcards in sequence", node)
 
         # Check for possible errors such as two adjacent wildcard sequences
@@ -236,14 +236,14 @@ class PatternParser(ast.NodeTransformer):
             if len(item) == 0:
                 raise self._syntax_error("invalid wildcards in sequence", node)
             # The first and last item of a sequence cannot be plain wildcards
-            if isinstance(item[0], pyma_ast.Wildcard) or isinstance(item[-1], pyma_ast.Wildcard):
+            if isinstance(item[0], pypat_ast.Wildcard) or isinstance(item[-1], pypat_ast.Wildcard):
                 raise self._syntax_error("invalid wildcards in sequence", node)
             # If there are only wildcards here, we cannot identify the sub-sequence later on
             if all(is_wildcard(elt) for elt in item):
                 raise self._syntax_error("invalid wildcards in sequence", node)
 
         min_length = len(left) + len(right) + sum([len(item) for item in sub_seqs])
-        return _cl(pyma_ast.SequencePattern(left, right, sub_seqs, names, min_length, None), node)
+        return _cl(pypat_ast.SequencePattern(left, right, sub_seqs, names, min_length, None), node)
 
     def _handle_str_seq(self, node, elts: list):
         elts = [self.visit(elt) for elt in elts]
@@ -255,7 +255,7 @@ class PatternParser(ast.NodeTransformer):
         for elt in elts:
             if is_seq_wildcard(elt):
                 sub_seqs.append([])
-                names.append(elt.target if isinstance(elt, pyma_ast.Binding) else None)
+                names.append(elt.target if isinstance(elt, pypat_ast.Binding) else None)
             else:
                 sub_seqs[-1].append(elt)
 
@@ -268,7 +268,7 @@ class PatternParser(ast.NodeTransformer):
             if len(item) == 0 and i > 0:
                 raise self._syntax_error("invalid wildcards in sequence", node)
             # The first and last item of a sequence cannot be plain wildcards
-            if isinstance(item[0], pyma_ast.Wildcard) or isinstance(item[-1], pyma_ast.Wildcard):
+            if isinstance(item[0], pypat_ast.Wildcard) or isinstance(item[-1], pypat_ast.Wildcard):
                 raise self._syntax_error("invalid wildcards in sequence", node)
             # If there are only wildcards here, we cannot identify the sub-sequence later on
             if all(is_wildcard(elt) for elt in item):
@@ -282,19 +282,19 @@ class PatternParser(ast.NodeTransformer):
             if len(sub_seqs) == 0:
                 raise self._syntax_error("invalid string sequence", node)
 
-        return pyma_ast.StringDeconstructor(groups=sub_seqs, fixed_start=fixed_start, targets=names)
+        return pypat_ast.StringDeconstructor(groups=sub_seqs, fixed_start=fixed_start, targets=names)
 
-    def visit_Alternatives(self, node: pyma_ast.Alternatives):
+    def visit_Alternatives(self, node: pypat_ast.Alternatives):
         return node
 
     def visit_Attribute(self, node: ast.Attribute):
         name = _get_name(node)
-        return pyma_ast.Deconstructor(name, [])
+        return pypat_ast.Deconstructor(name, [])
 
-    def visit_AttributeDestructor(self, node: pyma_ast.AttributeDeconstructor):
+    def visit_AttributeDestructor(self, node: pypat_ast.AttributeDeconstructor):
         return node
 
-    def visit_Binding(self, node: pyma_ast.Binding):
+    def visit_Binding(self, node: pypat_ast.Binding):
         return node
 
     def visit_BinOp(self, node: ast.BinOp):
@@ -310,7 +310,7 @@ class PatternParser(ast.NodeTransformer):
         elif isinstance(op, ast.MatMult):
             # Special case: `a @ b` is interpreted as `a @ b()`
             if isinstance(node.right, ast.Name):
-                right = pyma_ast.Deconstructor(node.right.id, [])
+                right = pypat_ast.Deconstructor(node.right.id, [])
                 return _cl(self.make_binding(node.left, right), node)
             else:
                 return _cl(self.make_binding(node.left, self.visit(node.right)), node)
@@ -321,10 +321,10 @@ class PatternParser(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call):
         name = _get_name(node.func)
         if len(node.keywords) == 0:
-            return pyma_ast.Deconstructor(name, [self.visit(arg) for arg in node.args])
+            return pypat_ast.Deconstructor(name, [self.visit(arg) for arg in node.args])
 
         elif len(node.args) == 0:
-            return pyma_ast.AttributeDeconstructor(name, {arg.arg: self.visit(arg.value) for arg in node.keywords})
+            return pypat_ast.AttributeDeconstructor(name, {arg.arg: self.visit(arg.value) for arg in node.keywords})
 
         else:
             raise self._syntax_error("cannot mix positional and keyword arguments for deconstructor", node)
@@ -332,7 +332,7 @@ class PatternParser(ast.NodeTransformer):
     def visit_Constant(self, node: ast.Constant):
         return node
 
-    def visit_Deconstructor(self, node: pyma_ast.Deconstructor):
+    def visit_Deconstructor(self, node: pypat_ast.Deconstructor):
         return node
 
     def visit_Dict(self, node: ast.Dict):
@@ -355,7 +355,7 @@ class PatternParser(ast.NodeTransformer):
         return _cl(ast.Dict(keys=keys, values=values), node)
 
     def visit_Ellipsis(self, node: ast.Ellipsis):
-        return _cl(pyma_ast.Wildcard(is_seq=True), node)
+        return _cl(pypat_ast.Wildcard(is_seq=True), node)
 
     def visit_Expr(self, node: ast.Expr):
         return self.visit(node.value)
@@ -363,7 +363,7 @@ class PatternParser(ast.NodeTransformer):
     def visit_List(self, node: ast.List):
         return self._handle_seq(node)
 
-    def visit_ListPattern(self, node: pyma_ast.SequencePattern):
+    def visit_ListPattern(self, node: pypat_ast.SequencePattern):
         return node
 
     def visit_Module(self, node: ast.Module):
@@ -372,53 +372,53 @@ class PatternParser(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name):
         name = node.id
-        result = _cl(pyma_ast.Wildcard(is_seq=False), node)
+        result = _cl(pypat_ast.Wildcard(is_seq=False), node)
         if name != '_':
-            result = _cl(pyma_ast.Binding(target=name, value=result), node)
+            result = _cl(pypat_ast.Binding(target=name, value=result), node)
         return result
 
     def visit_NameConstant(self, node: ast.NameConstant):
-        return _cl(pyma_ast.Constant(value=node.value), node)
+        return _cl(pypat_ast.Constant(value=node.value), node)
 
     def visit_Num(self, node: ast.Num):
-        return _cl(pyma_ast.Constant(value=node.n), node)
+        return _cl(pypat_ast.Constant(value=node.n), node)
 
     def visit_Set(self, node: ast.Set):
         if len(node.elts) == 1:
             elt = node.elts[0]
             if isinstance(elt, ast.Str):
-                return _cl(pyma_ast.RegularExpression(pattern=elt.s), node)
+                return _cl(pypat_ast.RegularExpression(pattern=elt.s), node)
 
             elif isinstance(elt, ast.Name):
                 name = elt.id
                 if name in ('bool', 'float', 'int',
                             'alnum', 'alpha', 'ascii', 'decimal', 'digit', 'identifier', 'lower',
                             'numeric', 'printable', 'space', 'title', 'upper'):
-                    return _cl(pyma_ast.RegularExprType(type_name=name), node)
+                    return _cl(pypat_ast.RegularExprType(type_name=name), node)
                 elif name in ('name', 'whitespace', ):
                     value = {
                         'name':  r'[A-Za-z_]\w+',
                         'whitespace': r'\s+',
                     }[name]
-                    return _cl(pyma_ast.RegularExpression(pattern=value), node)
+                    return _cl(pypat_ast.RegularExpression(pattern=value), node)
 
         self.generic_visit(node)
 
     def visit_Starred(self, node: ast.Starred):
         if isinstance(node.value, ast.Name):
             name = node.value.id
-            result = _cl(pyma_ast.Wildcard(is_seq=True), node.value)
+            result = _cl(pypat_ast.Wildcard(is_seq=True), node.value)
             if name != '_':
-                result = _cl(pyma_ast.Binding(name, result), node)
+                result = _cl(pypat_ast.Binding(name, result), node)
             return result
 
         raise self._syntax_error(f"can't assign to '{type(node)}'", node)
 
     def visit_Str(self, node: ast.Str):
-        return _cl(pyma_ast.Constant(value=node.s), node)
+        return _cl(pypat_ast.Constant(value=node.s), node)
 
     def visit_Tuple(self, node: ast.Tuple):
         return self._handle_seq(node)
 
-    def visit_Wildcard(self, node: pyma_ast.Wildcard):
+    def visit_Wildcard(self, node: pypat_ast.Wildcard):
         return node
