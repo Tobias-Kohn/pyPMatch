@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 29.08.2018
+# Updated: 11.09.2018
 #
 # License: Apache 2.0
 #
@@ -70,7 +70,7 @@ class Compiler(ast.NodeVisitor):
     def _create_guard(self, guard: str):
         if guard is None:
             code = "\tdef test_guard(self):\n" \
-                   "\t\treturn True\n"
+                   "\t\treturn True"
             return code
 
         code = ["\tdef test_guard(self):"]
@@ -140,6 +140,7 @@ class Compiler(ast.NodeVisitor):
         if all(isinstance(elt, pypat_ast.Constant) for elt in node.elts):
             return f"{{}} in ({', '.join([repr(elt.value) for elt in node.elts])})"
 
+        # if possible, we start with a check if the given value has the necessary type
         code = []
         if all(isinstance(elt, (pypat_ast.AttributeDeconstructor, pypat_ast.Deconstructor)) for elt in node.elts):
             names = set()
@@ -150,10 +151,11 @@ class Compiler(ast.NodeVisitor):
                     for n in elt.name:
                         names.add(n)
 
-            test = f"isinstance({{}}, {self.use_name(names)})"
-            if all(isinstance(elt, pypat_ast.Deconstructor) and len(elt.args) == 0 for elt in node.elts):
-                return test
-            code.append(f"if not {test.format('node')}: return False")
+            if '_' not in names:
+                test = f"isinstance({{}}, {self.use_name(names)})"
+                if all(isinstance(elt, pypat_ast.Deconstructor) and len(elt.args) == 0 for elt in node.elts):
+                    return test
+                code.append(f"if not {test.format('node')}: return False")
 
         self.alternative_lock += 1
         for elt in node.elts:
@@ -243,7 +245,7 @@ class Compiler(ast.NodeVisitor):
         else:
             code = [
                 "if isinstance(node, str):",
-                f"\treturn node.is{node.type_name}",
+                f"\treturn node.is{node.type_name}()",
                 "else:",
                 "\treturn False"
             ]
@@ -299,8 +301,21 @@ class Compiler(ast.NodeVisitor):
         code.append("\treturn False")
         return self.make_method(code)
 
+    def visit_StringDeconstructor(self, node: pypat_ast.StringDeconstructor):
+        code = [
+            f"result = {self.visit_str_StringDeconstructor(node).format('node')}",
+            "return result == len(node)",
+        ]
+        return self.make_method(code)
+
+    def visit_Wildcard(self, node: pypat_ast.Wildcard):
+        if node.is_seq:
+            raise self._syntax_error("unexpected sequence wildcard", node)
+        return "True"
+
+
     def _handle_str_group_fixed(self, group: list):
-        if len(group) == 1:
+        if len(group) == 1 and False:
             return self.visit_str(group[0]).format("node[i:]")
 
         else:
@@ -315,30 +330,21 @@ class Compiler(ast.NodeVisitor):
 
     def _handle_str_group_find(self, group: list):
         node = group[0]
-        if len(group) == 1 and isinstance(node,
-                                          (pypat_ast.Constant, pypat_ast.RegularExpression, pypat_ast.RegularExprType)):
-            return self.visit_str(node)
+        # if len(group) == 1 and isinstance(node,
+        #                                   (pypat_ast.Constant, pypat_ast.RegularExpression, pypat_ast.RegularExprType)):
+        #     return self.visit_str(node)
 
         item = self._handle_str_group_fixed(group)
         code = [
             "i = 0",
             "while i < len(node):",
-            f"\tk = {item}",
+            f"\tk = {item.format('node[i:]')}",
             "\tif k is not None:",
             "\t\treturn (i, i+k)",
             "\ti += 1",
             "return None"
         ]
         return self.make_method(code)
-
-
-    def visit_StringDeconstructor(self, node: pypat_ast.StringDeconstructor):
-        return self.visit_str_StringDeconstructor(node) + " is not None"
-
-    def visit_Wildcard(self, node: pypat_ast.Wildcard):
-        if node.is_seq:
-            raise self._syntax_error("unexpected sequence wildcard", node)
-        return "True"
 
 
     def visit_str(self, node):
@@ -348,16 +354,46 @@ class Compiler(ast.NodeVisitor):
 
     def visit_str_Alternatives(self, node: pypat_ast.Alternatives):
         code = []
+        for elt in node.elts:
+            value = self.visit_str(elt)
+            code.extend([
+                f"result = {value.format('node')}",
+                "if result is not None:",
+                "\treturn result",
+            ])
+        code.append("return None")
+        return self.make_method(code)
+
+    def visit_str_Binding(self, node: pypat_ast.Binding):
+        self.check_target(node.target, node)
+        if isinstance(node.value, pypat_ast.RegularExpression):
+            code = [
+                "import re",
+                f"m = re.search({repr(node.value.pattern)}, node)",
+                "if m is not None:",
+                "\ti, j = m.start(), m.end()",
+                f"\tself.targets['{node.target}'] = node[i:j]",
+                "\treturn i, j",
+                "else:",
+                "\treturn None",
+            ]
+        else:
+            value = self.visit_str(node.value)
+            code = [
+                f"result = {value.format('node')}",
+                "if result is not None:",
+                "\ti, j = result",
+                f"\tself.targets['{node.target}'] = node[i:j]",
+                f"return result",
+            ]
         return self.make_method(code)
 
     def visit_str_Constant(self, node: pypat_ast.Constant):
         s = node.value
         code = [
-            f"idx = node.find({repr(s)})",
-            "if idx >= 0:",
-            f"\treturn (idx, idx + {len(s)})",
-            "else:",
-            "\treturn None"
+            f"if node.startswith({repr(s)}):",
+            f"\treturn {len(s)}",
+            "return None",
         ]
         return self.make_method(code)
 
@@ -370,6 +406,7 @@ class Compiler(ast.NodeVisitor):
         return self.make_method(code)
 
     def visit_str_RegularExprType(self, node: pypat_ast.RegularExprType):
+        # TODO: implement float, int, bool
         if node.type_name in ('float', 'int'):
             pass
 
@@ -382,8 +419,9 @@ class Compiler(ast.NodeVisitor):
                 "\ti = 0",
                 f"\twhile i < len(node) and node[i].is{node.type_name}():",
                 "\t\ti += 1",
-                "\treturn (0, i)"
-                "return (None, None)",
+                "\tif i > 0:",
+                "\t\treturn (0, i)",
+                "return None",
             ]
             return self.make_method(code)
 
@@ -394,16 +432,22 @@ class Compiler(ast.NodeVisitor):
         ]
         for i, item in enumerate(node.groups):
             if i == 0 and node.fixed_start:
-                code.append("\ti = " + self._handle_str_group_fixed(node.groups[0])).format("node")
-            elif i < len(node.names) and node.names[i] is not None:
-                name = node.names[i]
+                code.append("\ti = " + self._handle_str_group_fixed(node.groups[0]).format("node"))
+            elif i < len(node.targets) and node.targets[i] is not None:
+                name = node.targets[i]
+                self.check_target(name, node)
                 code.extend([
-                    "\tj, k = " + self._handle_str_group_find(item).format("node[i:"),
+                    "\tj, k = " + self._handle_str_group_find(item).format("node[i:]"),
+                    "\tj += i",
                     f"\tself.targets['{name}'] = node[i:j]",
-                    "\ti = k"
+                    "\ti += k"
                 ])
             else:
-                code.append("\tj, i = " + self._handle_str_group_find(item).format("node[i:"))
+                code.extend([
+                    "\tj, k = " + self._handle_str_group_find(item).format("node[i:]"),
+                    "\tj += i",
+                    "\ti += k",
+                ])
 
         code.extend([
             "\treturn i",

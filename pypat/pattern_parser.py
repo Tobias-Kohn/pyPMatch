@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 03.09.2018
+# Updated: 11.09.2018
 #
 # License: Apache 2.0
 #
@@ -253,13 +253,13 @@ class PatternParser(ast.NodeTransformer):
         names = [ None ]
         sub_seqs = [[]]
         for elt in elts:
-            if is_seq_wildcard(elt):
+            if is_wildcard(elt):
                 sub_seqs.append([])
                 names.append(elt.target if isinstance(elt, pypat_ast.Binding) else None)
             else:
                 sub_seqs[-1].append(elt)
 
-        while names[-1] is None:
+        while len(names) > 0 and names[-1] is None:
             del names[-1]
 
         # Check for possible errors such as two adjacent wildcard sequences

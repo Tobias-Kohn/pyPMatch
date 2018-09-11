@@ -44,7 +44,11 @@ def pat_exec(source: str, filename: str = '<string>', module=None):
     """
     scanner = syntax_support.TextScanner(filename, source)
     code = scanner.get_text()
+    print(code)
+    print("=" * 80, flush=True)
     match_module = scanner.get_match_code()
+    print(match_module)
+    print("=" * 80, flush=True)
     match_mod = types.ModuleType('__match__')
     exec(builtins.compile(match_module, '__match__', 'exec'), match_mod.__dict__)
     compiled_code = builtins.compile(code, filename, 'exec')
