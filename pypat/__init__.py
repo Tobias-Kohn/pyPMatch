@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 27.08.2018
+# Updated: 11.09.2018
 #
 # License: Apache 2.0
 #
@@ -35,7 +35,7 @@ def case(pattern: str):
     return decorate
 
 
-def pyma_exec(source: str, filename: str = '<string>', module=None):
+def pat_exec(source: str, filename: str = '<string>', module=None):
     """
     Takes the source code of a program as string, compiles, and then executes the given program.  The program can
     contain `match`/`case` statements, which are duly replaced before using Python's builtin compiler.
@@ -59,7 +59,7 @@ def pyma_exec(source: str, filename: str = '<string>', module=None):
     return mod
 
 
-def pyma_translate(source: str):
+def pat_translate(source: str):
     """
     Translates the given source program to regular Python code, and returns the translated code, as well as the
     code of the auxiliary `__match__` module.

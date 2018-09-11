@@ -1,24 +1,24 @@
-# PyMa
+# PyPAT
 
 > **This is work in progress!**  The documentation is not complete, yet, and there is no guarantee that all features
 > are available at the moment.
 
 
-_PyMa_ provides **Pattern Matching** in _Python_.  It is mostly based on _pattern matching_ as found in 
+_PyPAT_ provides **Pattern Matching** in _Python_.  It is mostly based on _pattern matching_ as found in 
 [_Scala_](https://www.scala-lang.org/).  Its main objective is to deconstruct objects, and thereby check if any
 given object fulfills the criteria to be deconstructed in a particular way.
 
-This document gives a rough, unpolished overview of _PyMa_, and its abilities, as the primary efforts is currently
+This document gives a rough, unpolished overview of _PyPAT_, and its abilities, as the primary efforts is currently
 directed towards the development of the library itself.  You also might want to check out the FAQ further down below.
 
-_PyMa_ requires at least Python 3.4.
+_PyPAT_ requires at least Python 3.4.
 
 
 ## Example
 
-_PyMa_ was initially developed for analysis of Python code via its _Abstract Syntax Tree_ (AST).  The example below
-shows how _PyMa_'s pattern matching can be used to implement a very simple code optimiser.  However, there is nothing
-special about the `ast`-module from _PyMa_'s point of view, and you can equally use it in combination with anything
+_PyPAT_ was initially developed for analysis of Python code via its _Abstract Syntax Tree_ (AST).  The example below
+shows how _PyPAT_'s pattern matching can be used to implement a very simple code optimiser.  However, there is nothing
+special about the `ast`-module from _PyPAT_'s point of view, and you can equally use it in combination with anything
 else.
 
 ```python
@@ -44,10 +44,10 @@ You will find more examples in the [examples folder](examples); just run [run_ex
 
 #### Compile/Execute Code Directly
 
-If you simply want to take _PyMa_ on a test drive, use `pyma_exec` as shown below.
+If you simply want to take _PyPAT_ on a test drive, use `pyma_exec` as shown below.
 
 ```python
-from pyma import pyma_exec
+from pypat import pat_exec
 
 my_code = """
 match sum([2, 3, 5, 7]):
@@ -57,17 +57,17 @@ match sum([2, 3, 5, 7]):
         print("The result", x, "is wrong")
 """
 
-pyma_exec(my_code)
+pat_exec(my_code)
 ```
 
 
 #### Import Code From Python Modules
 
 It is probably more convenient to install the auto import hook, so that all modules in your package/project are
-compiled using the _PyMa_-compiler (if they contain a `case` statement, that is).  The auto import is installed
+compiled using the _PyPAT_-compiler (if they contain a `case` statement, that is).  The auto import is installed
 directly through the import of `enable_auto_import`.
 ```python
-from pyma import enable_auto_import
+from pypat import enable_auto_import
 
 import my_module
 my_module.test_me( sum([2, 3, 5, 7]) )
@@ -89,12 +89,12 @@ def test_me(arg):
 
 #### Decorate Functions
 
-If you do not want _PyMa_ to mess with your code, you can still use the pattern matching in the form of function
+If you do not want _PyPAT_ to mess with your code, you can still use the pattern matching in the form of function
 decorators.  You put the pattern as a string into the decorator.  The function itself then takes the variables of the
 pattern as parameters.
 
 ```python
-from pyma import case
+from pypat import case
 
 @case("17")
 def test_me():
@@ -156,11 +156,11 @@ There are some special cases, and limitations you should be aware of:
   values in `Foo` are equal, use `Foo(x, y) if x == y` instead;
 - You cannot bind anything inside an alternative.  Hence, `A|(x @ B)|C` is illegal;
 - It is not possible to bind anything to the wildcard `_`.  While `_` is a regular name in Python, it has special
-  meaning in _PyMa_ patterns.  Something like `_ @ A` is, however, not illegal, but equivalent to `A()`;
-- Even though the ellipsis `...` is a 'normal value' in Python, it has a special meaning in _PyMa_ as a wildcard;
+  meaning in _PyPAT_ patterns.  Something like `_ @ A` is, however, not illegal, but equivalent to `A()`;
+- Even though the ellipsis `...` is a 'normal value' in Python, it has a special meaning in _PyPAT_ as a wildcard;
 - If you want to make sure you have a _dictionary_ with certain keys/values, `{ ... }` will not suffice.  Use the
   syntax `dict({ 'key': value, ... })` instead;
-- _PyMa_ does not look at the names involved.  If a name is followed by parentheses as in `Foo()`, the name is taken
+- _PyPAT_ does not look at the names involved.  If a name is followed by parentheses as in `Foo()`, the name is taken
   to refer to a class/type, against which the value is tested.  Otherwise, the name is a variable that will match any
   value.  This means that the pattern `str` will match everything and override the variable `str` in the process,
   while `str()` will test if the value is a string;
@@ -219,30 +219,30 @@ specifying the value outside a `match` block.
 
 ## FAQ
 
-#### Can I Use _PyMa_ in My Project?
+#### Can I Use _PyPAT_ in My Project?
 
-Yes, _PyMa_ is released under the [Apache 2.0 license](LICENSE), which should allow you to freely use _PyMa_ in your
+Yes, _PyPAT_ is released under the [Apache 2.0 license](LICENSE), which should allow you to freely use _PyPAT_ in your
 own projects.  Since the project is currently under heavy development, the pattern matching might fail in unexpected
 ways, though.
 
-In order to provide this new syntax for pattern matching, _PyMa_ needs to translate your code before Python's own
+In order to provide this new syntax for pattern matching, _PyPAT_ needs to translate your code before Python's own
 parser/compiler can touch it.  But, the translation process is design to only modify the bare minimum of your original
 Python code.  No commends are removed, no lines inserted or deleted, and no variables or functions renamed.  But since
 `case` and `match` have become keywords, there is a possible incompatibility with your existing code.
 
-In addition to `case` and `match`, _PyMa_ introduces two more names: `__match__`, and `__matchvalue__`, respectively.
+In addition to `case` and `match`, _PyPAT_ introduces two more names: `__match__`, and `__matchvalue__`, respectively.
 It is very unlikely, though, that your program uses either of these names.
 
 
 #### Why Yet Another Pattern Matching Library/Proposal?
 
 There have been discussions about adding a `switch` statement, or even pattern matching to _Python_ before (see, e.g.,
-[PEP 3103](https://www.python.org/dev/peps/pep-3103/)).  Hence, _PyMa_ is not an new idea.  In contrast to most
+[PEP 3103](https://www.python.org/dev/peps/pep-3103/)).  Hence, _PyPAT_ is not an new idea.  In contrast to most
 discussion I am aware of so far, this project differs in that my focus is not on the exact syntax, but more on getting
 the semantics right.  And, at the end of the day, I just needed (or let's say 'strongly desired') pattern matching 
 for other projects I am working on.
 
-As such, _PyMa_ shows how full pattern matching can be integrated with Python, but there is no claim whatsoever that 
+As such, _PyPAT_ shows how full pattern matching can be integrated with Python, but there is no claim whatsoever that 
 the syntax used here is the best possible alternative.
 
 
@@ -261,7 +261,7 @@ What you would usually do in Python is something like `isinstance(value, str)`, 
 case str():
     print("We have a string!")
 ``` 
-Make sure you put the parentheses after the `str`, as these parentheses tell _PyMa_ that `str` is supposed to be a 
+Make sure you put the parentheses after the `str`, as these parentheses tell _PyPAT_ that `str` is supposed to be a 
 class against which to test, and not a new name for the value.
 
 
@@ -313,14 +313,14 @@ In statically compiled languages it is possible to test only once (during compil
 `eggs` and `ham`.  In Python, however, even the class `Foo` refers to might change, so that we need to test everything
 upon each matching attempt.
 
-Another limitations is due to the fact _PyMa_ tries to minimize the amount your code needs to be changed.  This means
+Another limitations is due to the fact _PyPAT_ tries to minimize the amount your code needs to be changed.  This means
 that each `case` statement is treated in isolation from all others, and it is therefore not possible to factor out
-common parts.  Again, there is certainly room for further improvement, but it is not a priority of _PyMa_.
+common parts.  Again, there is certainly room for further improvement, but it is not a priority of _PyPAT_.
 
 
 #### Will It Break My Code If I Use `case` and `match` as Variable Names?
 
-There is, of course, always a danger that _PyMa_'s compiler will mis-identify one of your variables as a `match`,
+There is, of course, always a danger that _PyPAT_'s compiler will mis-identify one of your variables as a `match`,
 or `case` statement.  However, in order to be recognised as a statement, either keyword (`case`, `match`) must be the
 first word on a line, and it cannot be followed by a colon, or an operator (such as an assignment).  So, if you have
 a function called `case`, the function call `case(...)` might be interpreted as a `case` statement, but an assignment
@@ -333,17 +333,17 @@ Python 3.8 will introduce assignment expressions (see [PEP 572](https://www.pyth
 therefore be natural to use `x := A` instead of `x @ A` for name bindings.
 
 In fact, I am happy to add full support for `:=`.  At the time of writing, however, `:=` is not yet a valid token in
-Python.  Using only `:=` would mean that _PyMa_ requires at least Python 3.8, while `@` has already become a valid 
+Python.  Using only `:=` would mean that _PyPAT_ requires at least Python 3.8, while `@` has already become a valid 
 operator in Python 3.5 [PEP 465](https://www.python.org/dev/peps/pep-0465/).
 
 
 #### Why `1 | ... | 9` Instead Of the Simpler `1 ... 9`?
 
-The entire syntax of patterns in _PyMa_ is based on standard Python syntax.  Even though the patterns are semantically
+The entire syntax of patterns in _PyPAT_ is based on standard Python syntax.  Even though the patterns are semantically
 nonsense, they are syntactically valid.  The sequence `1 ... 9`, however, is not a valid sequence in Python, and would
 issue a syntax error.
 
-There are various reasons for wanting patterns to be valid Python syntax.  One of them is that _PyMa_ gets away with
+There are various reasons for wanting patterns to be valid Python syntax.  One of them is that _PyPAT_ gets away with
 much less parsing work on its own.
 
 Apart from this issue of pragmatics, writing `1 | ... | 9` seems clearer to me, since `1 ... 9` could also mean that
@@ -361,7 +361,7 @@ more than Python's assignment operator.
 On the other hand, while developing the library, I wondered if it possible to give meaning to `case` even outside a
 `match` block, so as to make the entire syntax as orthogonal, and as flexible as possible.
  
-As _PyMa_ is kind of a prototype, in the end, the standalone variant of `case` might not survive, and not make it into
+As _PyPAT_ is kind of a prototype, in the end, the standalone variant of `case` might not survive, and not make it into
 subsequent versions.  For the moment, it remains there to fully test its usefulness.
 
 
@@ -375,7 +375,7 @@ wrong for Python to try, and make them expressions.
 
 #### Why Do I Have to Use `case _` Instead Of `else`?
 
-The implementation of _PyMa_ is focused on minimising the rewriting of any Python code, or module.  It will only
+The implementation of _PyPAT_ is focused on minimising the rewriting of any Python code, or module.  It will only
 translate `case`, and `match`, statements where it is pretty certain that such a statement is meant in the first
 place, leaving all your code around it untouched.
 

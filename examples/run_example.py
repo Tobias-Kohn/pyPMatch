@@ -6,7 +6,7 @@
 #
 # License: Apache 2.0
 #
-from pyma import enable_auto_import
+from pypat import enable_auto_import
 
 ##############################################################
 #                                                            #
