@@ -8,7 +8,7 @@
 #
 import builtins, inspect, os.path, types
 from . import syntax_support
-from . import pypat_decorators
+from . import pama_decorators
 from .match_template import MatchException
 
 
@@ -27,15 +27,15 @@ def case(pattern: str):
         name = f.__code__.co_name
         frame = inspect.currentframe().f_back
         multi = frame.f_locals.get(name, None)
-        if not isinstance(multi, pypat_decorators.MultiFunction):
-            multi = pypat_decorators.MultiFunction(name, frame.f_code.co_filename)
+        if not isinstance(multi, pama_decorators.MultiFunction):
+            multi = pama_decorators.MultiFunction(name, frame.f_code.co_filename)
         multi.register(frame, pattern, f)
         return multi
 
     return decorate
 
 
-def pat_exec(source: str, filename: str = '<string>', module=None):
+def pama_exec(source: str, filename: str = '<string>', module=None):
     """
     Takes the source code of a program as string, compiles, and then executes the given program.  The program can
     contain `match`/`case` statements, which are duly replaced before using Python's builtin compiler.

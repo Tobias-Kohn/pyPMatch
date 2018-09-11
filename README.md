@@ -131,7 +131,7 @@ Patterns can be expressed using the elements described below.
   `A`, `B`, and `C`, respectively;
 - `Foo(egg=A, ham=B)` matches all instances of `Foo`, where the attributes `egg`, and `ham` match the patterns
   `A` and `B`, respectively;
-- `12`, `'abc'`, `True` and other constant match a value if the value is equal to the constant;
+- `12`, `'abc'`, `True` and other constants match a value if the value is equal to the constant;
 - `{ 'a': A, 'b': B }` matches if the value has an element `'a'`, as well as an element `'b'`, which match `A` and
   `B`, respectively.  The value can be dictionary, but it does not have to be.  You can also check for specific
   elements within a list, say, using `{ 2: A, 5: B }`;
@@ -141,7 +141,9 @@ Patterns can be expressed using the elements described below.
 - `A | B | C` matches if at least one of the patterns `A`, `B`, `C` matches;
 - `[A, B, C, ..., D, E]` matches any sequence where the first three elements match `A`, `B`, and `C` and the last two 
   elements match `D`, and `E`, respectively.  This also includes Python's usual iterator unpacking, such as 
-  `[a, b, *c, d]`, which is interpreted as `[a, b, c @ ..., d]`; 
+  `[a, b, *c, d]`, which is interpreted as `[a, b, c @ ..., d]`;
+- `A + B` matches a string if it can be decomposed into the parts `A` and `B`.  For instance, `'(' + x + ')'` matches
+  any string that has some text enclosed in parentheses, and returns the middle part as `x`;
 - `x @ A` matches if the pattern `A` matches, and binds the value to the variable `x` if the entire match is 
   successful;
 - `_` is a wildcard that matches everything;
@@ -160,16 +162,16 @@ There are some special cases, and limitations you should be aware of:
 - Even though the ellipsis `...` is a 'normal value' in Python, it has a special meaning in _PyPAT_ as a wildcard;
 - If you want to make sure you have a _dictionary_ with certain keys/values, `{ ... }` will not suffice.  Use the
   syntax `dict({ 'key': value, ... })` instead;
+- Instead of writing a regular expression on your own, you can use `{int}`, or `{float}` to check if a string value
+  contains an `int`, or a `float`, respectively;
 - _PyPAT_ does not look at the names involved.  If a name is followed by parentheses as in `Foo()`, the name is taken
   to refer to a class/type, against which the value is tested.  Otherwise, the name is a variable that will match any
   value.  This means that the pattern `str` will match everything and override the variable `str` in the process,
   while `str()` will test if the value is a string;
-- Since a variable cannot be of the form `a.b`, an attribute `a.b` by itself is equivalent to `a.b()`;
-- Instead of writing a regular expression on your own, you can use `{int}`, or `{float}` to check if a string value
-  contains an `int`, or a `float`, respectively;
 - There are a few exceptions to the last rule.  Since name bindings are illegal in alternatives, anyway, you can write
   `A|B|C` as an abbreviation for `A()|B()|C()`.  Furthermore, `x @ A` is interpreted as `x @ A()`, since it makes no
   sense to bind two distinct variables to the exact same value;
+- Since a variable cannot be of the form `a.b`, an attribute `a.b` by itself is equivalent to `a.b()`;
 - `3 | ... | 6` is an abbreviation for the sequence `3|4|5|6`.  This syntax can be used with integers, and characters
   (single-character strings).  Thus, you can also write `'a' | ... | 'z'`, for instance.  Note, that here you need to
   write the ellipsis, and cannot use the otherwise equivalent token `*_`.

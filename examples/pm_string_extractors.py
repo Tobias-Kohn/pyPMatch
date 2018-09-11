@@ -16,6 +16,7 @@ def get_user_name(arg):
         case _:
             return 'unknown user of ' + arg
 
+
 def main():
     for email in [
         'monty@python.org',

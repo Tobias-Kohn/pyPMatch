@@ -7,7 +7,7 @@
 # License: Apache 2.0
 #
 import inspect, os.path
-from . import pypat_importhook
+from . import pama_importhook
 
 
 def _enable_auto_import():
@@ -26,7 +26,7 @@ def _enable_auto_import():
     else:
         path = ''
 
-    pypat_importhook.install_hook(path)
+    pama_importhook.install_hook(path)
 
 
 _enable_auto_import()

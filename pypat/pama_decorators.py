@@ -8,7 +8,7 @@
 #
 import ast, builtins, types
 import os.path
-from . import pypat_compiler
+from . import pama_compiler
 
 
 def _resolve_name(frame, name: str):
@@ -36,7 +36,7 @@ class MultiFunction(object):
     def __init__(self, name: str, filename: str):
         self.name = name
         self.functions = []
-        self.compiler = pypat_compiler.Compiler(filename, None)
+        self.compiler = pama_compiler.Compiler(filename, None)
         self._module = None
         self._name_index = 0
         self._mod_code = []

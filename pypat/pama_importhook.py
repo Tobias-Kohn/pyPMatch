@@ -70,10 +70,10 @@ class PyMa_Loader(Loader):
         return None
 
     def exec_module(self, module):
-        from . import pat_exec
+        from . import pama_exec
         with open(module.__name__) as input_file:
             input_text = ''.join(input_file.readlines())
-            pat_exec(input_text, filename=self._filename, module=module)
+            pama_exec(input_text, filename=self._filename, module=module)
 
 
 class PyMa_Finder(MetaPathFinder):
