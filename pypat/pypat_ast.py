@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 03.09.2018
+# Updated: 11.09.2018
 #
 # License: Apache 2.0
 #
@@ -81,6 +81,16 @@ class SequencePattern(ast.expr):
         self.exact_length = exact_length
 
     _fields = ('left', 'right', 'sub_seqs', 'targets', 'min_length', 'exact_length')
+
+
+class SequenceRepetition(ast.expr):
+
+    def __init__(self, value, rep_count):
+        super().__init__()
+        self.value = value
+        self.rep_count = rep_count
+
+    _fields = ('value', 'rep_count')
 
 
 class StringDeconstructor(ast.expr):

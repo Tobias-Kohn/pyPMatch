@@ -43,6 +43,10 @@ def _get_name(node):
     return None
 
 
+def _is_int(node):
+    return isinstance(node, ast.Num) and type(node.n) is int
+
+
 def _is_same_const_type(nodeA, nodeB):
     if type(nodeA) is type(nodeB):
         if isinstance(nodeA, ast.Num):
@@ -196,6 +200,18 @@ class PatternParser(ast.NodeTransformer):
 
         return _cl(pypat_ast.Alternatives(elts=elts), node)
 
+    def _handle_rep_count(self, node):
+        if isinstance(node, ast.Name):
+            return node.id
+        elif _is_int(node):
+            return node.n
+        elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+            elts = _flatten_op(node, ast.BitOr)
+            if all([_is_int(elt) and elt.n >= 0 for elt in elts]):
+                return [elt.n for elt in elts]
+
+        self._syntax_error("invalid repetition count", node)
+
     def _handle_seq(self, node):
         elts = [self.visit(elt) for elt in node.elts]
         if len(elts) == 0:
@@ -211,7 +227,7 @@ class PatternParser(ast.NodeTransformer):
             else:
                 sub_seqs[-1].append(elt)
 
-        while names[-1] is None:
+        while len(names) > 0 and names[-1] is None:
             del names[-1]
 
         left = sub_seqs[0]
@@ -264,10 +280,12 @@ class PatternParser(ast.NodeTransformer):
 
         # Check for possible errors such as two adjacent wildcard sequences
         for i, item in enumerate(sub_seqs):
-            # An empty sub-sequence cannot be matched unambiguously
-            if len(item) == 0 and i > 0:
-                raise self._syntax_error("invalid wildcards in sequence", node)
-            # The first and last item of a sequence cannot be plain wildcards
+            # An empty sub-sequence/group cannot be matched unambiguously
+            if len(item) == 0:
+                if 0 < i < len(sub_seqs)-1:
+                    raise self._syntax_error("invalid wildcards in sequence", node)
+                continue
+            # The first and last item of a group cannot be plain wildcards
             if isinstance(item[0], pypat_ast.Wildcard) or isinstance(item[-1], pypat_ast.Wildcard):
                 raise self._syntax_error("invalid wildcards in sequence", node)
             # If there are only wildcards here, we cannot identify the sub-sequence later on
@@ -306,6 +324,11 @@ class PatternParser(ast.NodeTransformer):
         elif isinstance(op, ast.BitOr):
             elts = _flatten_op(node, ast.BitOr)
             return self._handle_or(elts, node)
+
+        elif isinstance(op, (ast.BitXor, ast.Pow)):
+            value = self.visit(node.left)
+            rep_count = self._handle_rep_count(node.right)
+            return pypat_ast.SequenceRepetition(value, rep_count)
 
         elif isinstance(op, ast.MatMult):
             # Special case: `a @ b` is interpreted as `a @ b()`

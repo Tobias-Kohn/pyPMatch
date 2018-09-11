@@ -16,7 +16,7 @@ from pypat import enable_auto_import
 # import pm_recursion as pm
 # import pm_ast_simplify as pm
 # import pm_extractors as pm
-import pm_parsing as pm
+import pm_string_extractors as pm
 #                                                            #
 #                                                            #
 ##############################################################

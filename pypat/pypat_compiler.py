@@ -301,7 +301,19 @@ class Compiler(ast.NodeVisitor):
         code.append("\treturn False")
         return self.make_method(code)
 
+    def visit_SequenceRepetition(self, node: pypat_ast.SequenceRepetition):
+        return self.visit_str(node)
+
     def visit_StringDeconstructor(self, node: pypat_ast.StringDeconstructor):
+        # Special case `'abc' + _` testing if a string has a particular prefix
+        if len(node.groups) == 2 and len(node.groups[0]) == 1 and len(node.groups[1]) == 0 and len(node.targets) == 0:
+            item = node.groups[0][0]
+            if isinstance(item, pypat_ast.Constant):
+                code = [
+                    f"return isinstance(node, str) and node.startswith({repr(item.value)})",
+                ]
+                return self.make_method(code)
+
         code = [
             f"result = {self.visit_str_StringDeconstructor(node).format('node')}",
             "return result == len(node)",
@@ -329,7 +341,7 @@ class Compiler(ast.NodeVisitor):
             return self.make_method(code)
 
     def _handle_str_group_find(self, group: list):
-        node = group[0]
+        # node = group[0]
         # if len(group) == 1 and isinstance(node,
         #                                   (pypat_ast.Constant, pypat_ast.RegularExpression, pypat_ast.RegularExprType)):
         #     return self.visit_str(node)
@@ -406,7 +418,7 @@ class Compiler(ast.NodeVisitor):
         return self.make_method(code)
 
     def visit_str_RegularExprType(self, node: pypat_ast.RegularExprType):
-        # TODO: implement float, int, bool
+        #TODO: implement float, int, bool
         if node.type_name in ('float', 'int'):
             pass
 
@@ -425,6 +437,10 @@ class Compiler(ast.NodeVisitor):
             ]
             return self.make_method(code)
 
+    def visit_str_SequenceRepetition(self, node: pypat_ast.SequenceRepetition):
+        #TODO: Implement
+        pass
+
     def visit_str_StringDeconstructor(self, node: pypat_ast.StringDeconstructor):
         code = [
             "i = 0",
@@ -432,22 +448,37 @@ class Compiler(ast.NodeVisitor):
         ]
         for i, item in enumerate(node.groups):
             if i == 0 and node.fixed_start:
-                code.append("\ti = " + self._handle_str_group_fixed(node.groups[0]).format("node"))
+                code.extend([
+                    "\ti = " + self._handle_str_group_fixed(node.groups[0]).format("node"),
+                    "\tif i is None: return None"
+                ])
             elif i < len(node.targets) and node.targets[i] is not None:
                 name = node.targets[i]
                 self.check_target(name, node)
-                code.extend([
-                    "\tj, k = " + self._handle_str_group_find(item).format("node[i:]"),
-                    "\tj += i",
-                    f"\tself.targets['{name}'] = node[i:j]",
-                    "\ti += k"
-                ])
+
+                if len(item) == 0:
+                    code.extend([
+                        f"\tself.targets['{name}'] = node[i:]",
+                        "\ti = len(node)"
+                    ])
+                else:
+                    code.extend([
+                        "\tj, k = " + self._handle_str_group_find(item).format("node[i:]"),
+                        "\tj += i",
+                        f"\tself.targets['{name}'] = node[i:j]",
+                        "\ti += k"
+                    ])
             else:
-                code.extend([
-                    "\tj, k = " + self._handle_str_group_find(item).format("node[i:]"),
-                    "\tj += i",
-                    "\ti += k",
-                ])
+                if len(item) == 0:
+                    code.extend([
+                        "\ti = len(node)"
+                    ])
+                else:
+                    code.extend([
+                        "\tj, k = " + self._handle_str_group_find(item).format("node[i:]"),
+                        "\tj += i",
+                        "\ti += k",
+                    ])
 
         code.extend([
             "\treturn i",
