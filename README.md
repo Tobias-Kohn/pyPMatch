@@ -41,6 +41,14 @@ You will find more examples in the [examples folder](examples); just run [run_ex
 
 ## Usage
 
+#### Install pyPMatch
+
+In order to install the _pyPMatch_ library, simple do:
+```
+pip install pyPMatch
+```
+
+
 #### Compile/Execute Code Directly
 
 If you simply want to take _pyPMatch_ on a test drive, use `pyma_exec` as shown below.
