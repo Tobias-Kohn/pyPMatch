@@ -1,7 +1,6 @@
 # pyPMatch
 
-> **This is work in progress!**  The documentation is not complete, yet, and there is no guarantee that all features
-> are available at the moment.
+> **This is work in progress!**  Expect some rough spots, and some features to still be missing.
 
 
 _pyPMatch_ provides **Pattern Matching** in _Python_.  It is mostly based on _pattern matching_ as found in 
@@ -132,7 +131,7 @@ surprises, or even crashes._
 
 Patterns can be expressed using the elements described below.
 
-> As mentioned above: **not everything is implemented and tested**, yet!
+> As mentioned above: **not everything is fully implemented and tested**, yet!
 
 - `Foo()` matches all instances of the class `Foo`;
 - `Foo(A, B, C)` deconstructs an instance of `Foo`, which must yield three values, which then must match the patterns
