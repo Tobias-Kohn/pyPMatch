@@ -38,6 +38,8 @@ def simplify(node):
 
 You will find more examples in the [examples folder](examples); just run [run_example.py](examples/run_example.py).
 
+There is also some documentation in the [doc](doc)-folder, in particular the [introduction](doc/INTRODUCTION.md).
+
 
 ## Usage
 
