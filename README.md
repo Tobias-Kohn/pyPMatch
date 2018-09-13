@@ -356,7 +356,7 @@ Python.  Using only `:=` would mean that _pyPMatch_ requires at least Python 3.8
 operator in Python 3.5 [PEP 465](https://www.python.org/dev/peps/pep-0465/).
 
 
-#### Why `1 | ... | 9` Instead Of the Simpler `1 ... 9`?
+#### Why `1 | ... | 9` Instead of the Simpler `1 ... 9`?
 
 The entire syntax of patterns in _pyPMatch_ is based on standard Python syntax.  Even though the patterns are semantically
 nonsense, they are syntactically valid.  The sequence `1 ... 9`, however, is not a valid sequence in Python, and would
@@ -403,7 +403,7 @@ replaced where it should remain, leading to longer and more complex code.  Moreo
 in a `match` block are actually not linked, but stand as individual statements for themselves.  Using `else` raises 
 therefore a few additional questions concerning the semantics, which need proper answering.
 
-So, in short: using `else` would lead to a more brittle syntax with a quite few corner cases not covered.
+So, in short: using `else` would lead to a more brittle syntax with quite a few corner cases not covered.
 
 
 #### How About Some Proper Documentation?

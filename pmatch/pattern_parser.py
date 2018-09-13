@@ -174,17 +174,36 @@ class PatternParser(ast.NodeTransformer):
             return _cl(self.make_binding(bind_node.left, result), bind_node)
 
         # Handle the special cases `int | ... | int` and `char | ... | char`
-        if len(elts) == 3 and isinstance(elts[1], ast.Ellipsis) and \
-                _is_same_const_type(elts[0], elts[2]):
-            if type(elts[0]) is int:
-                items = self.make_range_int(elts[0], elts[2])
-            elif type(elts[0]) is str:
-                items = self.make_range_str(elts[0], elts[2])
-            else:
-                items = None
+        # if len(elts) == 3 and isinstance(elts[1], ast.Ellipsis) and \
+        #         _is_same_const_type(elts[0], elts[2]):
+        #     if type(elts[0]) is int:
+        #         items = self.make_range_int(elts[0], elts[2])
+        #     elif type(elts[0]) is str:
+        #         items = self.make_range_str(elts[0], elts[2])
+        #     else:
+        #         items = None
+        #
+        #     if len(items) <= 1:
+        #         raise self._syntax_error("there must be at least two alternatives", node)
 
-            if len(items) <= 1:
-                raise self._syntax_error("there must be at least two alternatives", node)
+        new_elts = []
+        for i, elt in enumerate(elts):
+            if isinstance(elt, ast.Ellipsis):
+                if i == 0 or i+1 == len(elts):
+                    raise self._syntax_error("'...' cannot be the first or last element in alternatives", node)
+                start, stop = elts[i-1], elts[i+1]
+                if not _is_same_const_type(start, stop):
+                    raise self._syntax_error("'...' cannot only be applied to int or str of length 1", node)
+                if _is_int(start):
+                    items = self.make_range_int(start, stop)
+                else:
+                    items = self.make_range_str(start, stop)
+                if len(items) > 2:
+                    del items[0], items[-1]
+                    new_elts += items
+            else:
+                new_elts.append(elt)
+        elts = new_elts
 
         # Special case: `A|B|C` is interpreted as `A()|B()|C()`
         if all(isinstance(elt, ast.Name) for elt in elts):
