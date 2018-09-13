@@ -75,7 +75,7 @@ There are a few exceptions for reasons of convenience.  For example, `case 3|4|5
 
 ## Syntax For Writing Patterns
 
-### Wildcards
+### Wildcards and Names
 
 If you do not care about the actual value of an element in the matched object, you can use the wildcard `_`.  While
 this is a perfectly legal name in Python, it has a special meaning in pattern matching: _do not care_.
@@ -87,6 +87,9 @@ it away.  Of course, you can also use `*_` itself to mean the same thing.
 Variable names like `a`, `b`, `x`, etc. in the example above are also considered to be wildcards.  In contrast to `_`,
 the extracted value is assigned to the respective variable.  If you do care about sub-sequences, you are absolutely
 free to use `*x`, etc.  In other words: the syntax from unpacking sequences still works as before.
+
+Note that each name can only occur once in any given pattern.  Something like `case (x, x):` is illegal, and will
+raise a syntax error.  Use _guards_ (see below) to check if two elements are equal.
 
 
 ### Constants And Alternatives
@@ -205,7 +208,88 @@ match obj:
         print("Anything")   # therefore matches anything...
 ```
 
+Internally, type checks are done through `isinstance(obj, int)`, etc.  Something like `case int()|float():` directly
+translates to `isinstance(obj, (int, float)):`.
+
+Type checking as explained here works not only with builtin types, but with any type or class.  See the section on
+**Deconstructing Types** further below for extended possibilities.
+
 
 ### Name Binding
 
-...
+There are situations, where you want to check if an element has a certain type, or value, and bind it to a variable at
+the same time.  For example, you might want to have a case covering all sequences starting with a lowercase letter,
+but you also want to extract this first letter.
+```python
+match obj:
+    case [('a' | ... | 'z'), *_]:
+        print("Starts with a lowercase letter, but which one?")
+    case [x, *_]:
+        print("We get the first element, but is it a lowercase letter?")
+```
+
+Luckily for us, there is a _name binding operator_ `@`, which allows us to check for specific values, or types, _and_
+assign it to a variable.
+```python
+match obj:
+    case [x @ ('a' | ... | 'z'), *_]:
+        print("Starts with a lowercase letter:", x)
+```
+
+This works just as well for types, of course:
+```python
+match obj:
+    case x @ int():
+        print("Integer", x)
+    case s @ str():
+        print("String", s)
+```
+
+There is one limitation to name binding, though.  Name binding cannot occur inside alternatives.  The following is
+invalid, and will raise a syntax error (even if you use the same variable name in both cases):
+```python
+match obj:
+    case (i @ int() | f @ float()):
+        # ERROR: DOES NOT WORK!
+```
+
+Recall, that all names must be unique in any given pattern.  Something like `case (x, x):` is illegal, and will not
+work.  Use _guards_ to test if two elements are equal.
+
+
+
+## Guards
+
+There are situations where patterns alone do not suffice to capture the full intent.  Sometimes, you need to check for
+additional conditions to be satisfied.  For these situations, you use a _guard_.
+
+After any pattern, you can specify an additional _guard_ with the keyword `if`.  The condition behind the `if` can,
+in fact, be any condition, making use of both variables from inside the pattern, as well as other variables in the
+surrounding scope.
+
+If you want to check if the first, and last element of a sequence are equal, you might write:
+```python
+match obj:
+    case [first, ..., last] if first == last:
+        print("First and last are the same")
+    case [x, y, z, *_] if x <= y <= z:
+        print("Seems to be in ascending order")
+    case _:
+        pass
+```
+
+This also allows you test if the object contains a value from a variable:
+```python
+match obj:
+    case [P, ...] if P == math.pi:
+        print("We start off with PI")
+    case [1, 2, *rest] if 5 > len(rest):
+        print("Nice start, but not enough elements.")
+    case _:
+        pass
+```
+
+
+## Deconstructing Types and Classes
+
+
