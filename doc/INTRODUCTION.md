@@ -136,7 +136,7 @@ What makes pattern matching so powerful is that constants, and alternatives can 
 To check if a string starts with the markers for a hexadecimal number, you do the following (the inner parentheses
 are not strictly necessary here, but help with readability):
 ```python
-match list(s):
+match s:
     case ['0', ('x' | 'X'), ('0' | ... | '9' | 
                              'A' | ... | 'F' | 'a' | ... | 'f'), *_]:
         print("This looks like a hexadecimal number")
@@ -289,7 +289,165 @@ match obj:
         pass
 ```
 
+If you need to have more than one condition to be checked, use `and` or `or`, as you normally would in an 
+`if`-statement.  It is _not_ possible to write something like `case A if B if C:`.
+
 
 ## Deconstructing Types and Classes
 
+### Checking Types and Fields
+
+If you have a class `Chicken` and want to test if an object is an instance of `Chicken`, you can either use Python's
+`isinstance()` function, or you use pattern matching with `case Chicken():`.  The true power of pattern matching,
+however, comes to play, when we start to nest patterns.
+
+Let us assume that instances of `Chicken` have a field `age`, and a field `sex`.  The first one is an integer giving 
+a chicken's age in months, say, while `sex` is either `'m'`, or `'f'`.  If we now want to find all female chicken older
+than five months, we do the following:
+```python
+match bird:
+    case Chicken(sex='f', age=x) if x > 5:
+        print("got one")
+    case Chicken(age=x) if x <= 5:
+        print("too young")
+    case _:
+        pass
+```
+
+Based on the basic principle, we assume that we can create a chicken through a constructor like 
+`my_chicken = Chicken(sex='f', age=0)`.  There might be more fields, or attributes, of course, but for pattern 
+matching, we just ignore them.  Keep in mind that in Python, we can usually add a new field to any chicken just
+like so: `my_chicken.eye_color = 'blue'`.  It would therefore not make sense for pattern matching in Python to
+require all fields to be named in the pattern.
+
+Going a step further, we might not actually have a chicken, but rather an egg, which contains a young chick.  And we
+would like to find those white eggs that will produce a female chicken one day.  This time, we also factor in the 
+possibility that someone used `'F'` instead of `'f'` for the chicken's sex:
+```python
+match thing:
+    case Egg(contents=Chicken(sex='f'|'F'), color='white'):
+        print("got one")
+    case _:
+        pass
+```
+Seeing how easy it is to inspect the sex of a chick in an egg using Python, we understand why computer science becomes
+so important in the sciences.  But, apart from that, what is the point here?
+
+Pattern matching unfolds its full power when it is combined with recursion/nesting.  You can not only specify the type 
+of an object, but, at the same time, also match any, or all of its fields to specific patterns on their own.  You can
+nest patterns as deep as ever you need them to be, and extract information, or make sure that an object satisfies a
+complex structure.  
+
+Just think of how easy it is to get a white egg containing a female chick out of a box with several eggs:
+```python
+match thing:
+    case Box(contents=[..., 
+                       x @ Egg(contents=Chicken(sex='f'|'F'), 
+                               color='white'), 
+                       ...]):
+        print("got one:", x)
+    case _:
+        pass
+```
+
+Finally, if you do not care about the specific type of an object, but only about its fields, just use a wildcard as
+its type/class.  If we are happy with any female animal, we write:
+```python
+match animal:
+    case _(sex='f'|'F'):
+        print("got one")
+    case _:
+        pass
+```
+Again, you can put this into a list, or any other pattern, if you so wish.
+
+Internally, the code for checking types, and fields is translated directly to `isinstance()` and `getattr()` calls. 
+Findings a female chicken with `case Chicken(sex='f', age=x) if x > 5:` ends up with code like:
+```python
+NO_VALUE = object()
+
+def _check_case_1(obj):   
+    """Returns tuple ('cond fulfilled?', 'value of x')"""
+    if isinstance(obj, Chicken):
+        _field_1 = getattr(obj, 'sex', NO_VALUE)
+        _field_2 = getattr(obj, 'age', NO_VALUE)
+        if _field_1 == 'f':
+            x = _field_2
+            if x > 5:
+                return (True, x)
+    return (False, None)
+```
+
+
+### De-Constructor
+
+Many constructors have positional arguments, which are then mapped to fields.  The order of the arguments, or fields,
+might even be quite obvious.  Take, for instance, the `BinOp`-class from Python's `ast`-module.  It represents a binary
+operation (such as an addition, multiplication, etc.), and has the three fields `left`, `op`, and `right`.  The 
+addition `x + 1` could be created like so:
+```python
+from ast import BinOp, Name, Add, Num
+addition = BinOp(Name('x'), Add(), Num(1))
+```
+There is little ambiguity there, even though you could equally write:
+```python
+addition = BinOp(left=Name(id='x'), op=Add(), right=Num(n=1))
+```
+
+If, in pattern matching, we want to to check if we have an addition with a variable on the left side, and the number 
+`1` on the right side, we can certainly do it like this:
+```python
+match ast_node:
+    case BinOp(left=Name(id=x), op=Add(), right=Num(n=1)):
+        print("The increased variable is", x)
+    case _:
+        pass
+```
+However, it is also possible to write it without explicitly naming all the fields:
+```python
+match ast_node:
+    case BinOp(Name(id=x), Add(), Num(1)):
+        print("The increased variable is", x)
+    case _:
+        pass
+```
+In order for this to work, _pyPMatch_ needs a way to figure out the values it needs to extract from the object `BinOp`.
+There are several possibilities, which are supported by _pyPMatch_, so that most cases should be covered out of the 
+box.  This kind of using deconstructors is discussed in detail in [Deconstructors](DECONSTRUCTOR.md).
+
+Because _pyPMatch_ does not have the name of fields, anymore, the generated code is quite different to what you get 
+with "named arguments" (the magic behind `extract_fields` is explained in [Deconstructors](DECONSTRUCTOR.md); here it
+should suffice to say that it returns a tuple):
+```python
+def _check_case_1(obj):
+    """Returns tuple ('cond fulfilled?', 'value of x')"""
+    if isinstance(obj, Chicken):
+        _fields = extract_fields(cls=Chicken, obj=obj)
+        if len(_fields) >= 3 and isinstance(_fields[0], Name) and \
+           isinstance(_fields[1], Add) and isinstance(_fields[2], Num):
+            x = getattr(_fields[0], 'id', NO_VALUE)
+            if x is NO_VALUE:
+                return (False, None)
+            _fields_2 = extract_fields(cls=Num, obj=_fields[2])
+            if len(_fields_2) >= 1 and _fields_2[0] == 1:
+                return (True, x)
+    return (False, None)
+```
+
+There are two limitations to keep in mind here, though.  First, for the time being, you cannot mix the variant with 
+position arguments using deconstructors, and the variant where you explicitly name the fields: you cannot have both
+for the same class pattern, that is.  As the example above shows, there is no problem in using one variant for `BinOp`,
+and another one for `Name`.  Second, you need to specify a valid class/type.  When using positional arguments, you 
+obviously cannot use the wildcard `_` as class name, because the pattern matcher needs a specific class.
+
+
+## Concluding Remarks
+
+There is much more to say (and discuss) about pattern matching, and its implementation.  This introduction should, 
+however, get you started.
+
+At various points, this introduction shows the code generated for some of the patterns.  Actually, _pyPMatch_ usually
+generates more complex code, capable of handling arbitrarily nested patterns.  The examples of generated code are thus
+not meant to be taken literally, but as basic guide to explain (or at least give a hint of) what is happening under 
+the hood.
 
