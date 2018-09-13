@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 11.09.2018
+# Updated: 12.09.2018
 #
 # License: Apache 2.0
 #
@@ -174,18 +174,6 @@ class PatternParser(ast.NodeTransformer):
             return _cl(self.make_binding(bind_node.left, result), bind_node)
 
         # Handle the special cases `int | ... | int` and `char | ... | char`
-        # if len(elts) == 3 and isinstance(elts[1], ast.Ellipsis) and \
-        #         _is_same_const_type(elts[0], elts[2]):
-        #     if type(elts[0]) is int:
-        #         items = self.make_range_int(elts[0], elts[2])
-        #     elif type(elts[0]) is str:
-        #         items = self.make_range_str(elts[0], elts[2])
-        #     else:
-        #         items = None
-        #
-        #     if len(items) <= 1:
-        #         raise self._syntax_error("there must be at least two alternatives", node)
-
         new_elts = []
         for i, elt in enumerate(elts):
             if isinstance(elt, ast.Ellipsis):
