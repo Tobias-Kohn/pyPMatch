@@ -76,6 +76,14 @@ In particular, do not expect any kind of expression to be evaluated!  For instan
 `case 7:`, because the `3+4` is never evaluated, but indicates that an object should be decomposable into `3` and `4`.
 
 
+## Installation
+
+_pyPMatch_ can be installed using `pip`:
+```
+pip install pyPMatch
+```
+You might also want to look at the [example](../examples); modify, and run [run_example.py](../examples/run_example.py).
+
 ## Syntax For Writing Patterns
 
 ### Wildcards and Names

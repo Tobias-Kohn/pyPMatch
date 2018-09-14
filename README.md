@@ -7,8 +7,8 @@ _pyPMatch_ provides **Pattern Matching** in _Python_.  It is mostly based on _pa
 [_Scala_](https://www.scala-lang.org/).  Its main objective is to deconstruct objects, and thereby check if any
 given object fulfills the criteria to be deconstructed in a particular way.
 
-This document gives a rough, unpolished overview of _pyPMatch_, and its abilities, as the primary efforts is currently
-directed towards the development of the library itself.  You also might want to check out the FAQ further down below.
+This document gives a rough, unpolished overview of _pyPMatch_, and its abilities.  Better documentation can be found
+in the [doc](doc)-folder, in particular the [introduction](doc/INTRODUCTION.md).  There is also a FAQ further below.
 
 _pyPMatch_ requires at least Python 3.4.
 
@@ -141,7 +141,8 @@ surprises, or even crashes._
 
 Patterns can be expressed using the elements described below.
 
-> As mentioned above: **not everything is fully implemented and tested**, yet!
+> As mentioned above: **not everything is fully implemented and tested**, yet!  In particular, there is only limited
+> support for `A + B` at the moment.
 
 - `Foo()` matches all instances of the class `Foo`;
 - `Foo(A, B, C)` deconstructs an instance of `Foo`, which must yield three values, which then must match the patterns
