@@ -15,9 +15,9 @@ from pmatch import enable_auto_import
 #                                                            #
 # import pm_recursion as pm
 # import pm_ast_simplify as pm
-# import pm_extractors as pm
+import pm_extractors as pm
 # import pm_string_extractors as pm
-import pm_hex_strings as pm
+# import pm_hex_strings as pm
 #                                                            #
 #                                                            #
 ##############################################################

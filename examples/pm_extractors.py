@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 27.08.2018
-# Updated: 27.08.2018
+# Updated: 14.09.2018
 #
 # License: Apache 2.0
 #
@@ -23,8 +23,8 @@ class EMail:
 
 class Handle:
 
-    @classmethod
-    def __unapply__(cls, handle):
+    @staticmethod
+    def __unapply__(handle):
         if type(handle) is str and len(handle) > 1:
             if handle[0] == '@':
                 return (handle[1:],)
