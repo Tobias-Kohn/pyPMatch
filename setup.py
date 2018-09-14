@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 28.08.2018
-# Updated: 12.09.2018
+# Updated: 14.09.2018
 #
 # License: Apache 2.0
 #
@@ -13,7 +13,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
 
 setuptools.setup(
     name = 'pyPMatch',
-    version = '0.1.0',
+    version = '0.1.1',
     author = 'Tobias Kohn',
     author_email = 'kohnt@tobiaskohn.ch',
     description = 'Pattern Matching in Python',
