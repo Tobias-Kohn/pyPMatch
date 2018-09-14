@@ -71,6 +71,9 @@ have been created through `obj = ast.UnaryOp(ast.USub(), <item>)`, but we do not
 There are a few exceptions for reasons of convenience.  For example, `case 3|4|5:` matches one of the numbers 
 `3`, `4`, or `5`, even though `3|4|5` itself would just evaluate to `7`.
 
+**NB:** Please be aware that many symbols are either not supported, or have a different meaning in pattern matching.
+In particular, do not expect any kind of expression to be evaluated!  For instance, `case 3+4:` is _not_ equivalent to
+`case 7:`, because the `3+4` is never evaluated, but indicates that an object should be decomposable into `3` and `4`.
 
 
 ## Syntax For Writing Patterns
