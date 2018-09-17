@@ -424,10 +424,10 @@ match ast_node:
 ```
 In order for this to work, _pyPMatch_ needs a way to figure out the values it needs to extract from the object `BinOp`.
 There are several possibilities, which are supported by _pyPMatch_, so that most cases should be covered out of the 
-box.  This kind of using deconstructors is discussed in detail in [Deconstructors](DECONSTRUCTOR.md).
+box.  This kind of using deconstructors is discussed in detail in [destructuring](DESTRUCTURING.md).
 
 Because _pyPMatch_ does not have the name of fields, anymore, the generated code is quite different to what you get 
-with "named arguments" (the magic behind `extract_fields` is explained in [Deconstructors](DECONSTRUCTOR.md); here it
+with "named arguments" (the magic behind `extract_fields` is explained in [destructuring](DESTRUCTURING.md); here it
 should suffice to say that it returns a tuple):
 ```python
 def _check_case_1(obj):

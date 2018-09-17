@@ -1,4 +1,4 @@
-# Deconstructors
+# Destructuring
 
 The [introduction](INTRODUCTION.md) already covers how you can check the type of an object, or match any of its fields
 to patterns.  However, there are situations when the information you wish to access, and match, is not readily 
@@ -7,10 +7,10 @@ compared to the order of the data.  Or, finally, you really just want a more con
 
 Anyway, in such a case where you do not want to, or cannot access an objects data through its attributes, you use a
 _de-constructor_ to access the data.  Whereas a _constructor_ takes several bits of data, and mangles them together
-to form a new object, the _deconstructor_ takes an object, and try to extract those original bits of data that went
+to form a new object, the _de-constructor_ takes an object, and tries to extract those original bits of data that went
 into the constructor in the first place.
 
-_NB: The "deconstructor" is not the same thing as a "destructor".  Its purpose is not to free or destroy an object
+_NB: The "de-constructor" is not the same thing as a "destructor".  Its purpose is not to free or destroy an object
 instance, but to extract the information encoded by the "constructor"._
 
 Let us resume the example from the introduction featuring the `BinOp`-class from the `ast`-module.  The constructor
