@@ -2,7 +2,7 @@
 # (c) 2018, Tobias Kohn
 #
 # Created: 15.08.2018
-# Updated: 11.09.2018
+# Updated: 17.09.2018
 #
 # License: Apache 2.0
 #
@@ -59,11 +59,15 @@ def pama_exec(source: str, filename: str = '<string>', module=None):
     return mod
 
 
-def pat_translate(source: str):
+def pama_translate(source: str, filename: str = '<string>'):
     """
     Translates the given source program to regular Python code, and returns the translated code, as well as the
     code of the auxiliary `__match__` module.
     """
-    # TODO: implement and test
-    raise NotImplementedError("'pyma_translate' is not implemented, yet")
-    return '', ''
+    if source is None:
+        with open(filename) as f:
+            source = f.read()
+    scanner = syntax_support.TextScanner(filename, source)
+    code = scanner.get_text()
+    match_module = scanner.get_match_code()
+    return code, match_module

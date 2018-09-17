@@ -6,8 +6,8 @@
 #
 # License: Apache 2.0
 #
-# The basic idea of this example follows the book `Programming in Scala` by _M. Odersky_, _L. Spoon_, and _B. Venners_,
-#   third edition, p. 595ff.
+# The basic idea of this example follows the book `Programming in Scala` by M. Odersky, L. Spoon, and B. Venners,
+# third edition, p. 595ff.
 #
 
 class EMail:
