@@ -10,17 +10,18 @@ _de-constructor_ to access the data.  Whereas a _constructor_ takes several bits
 to form a new object, the _de-constructor_ takes an object, and tries to extract those original bits of data that went
 into the constructor in the first place.
 
-_NB: The "de-constructor" is not the same thing as a "destructor".  Its purpose is not to free or destroy an object
-instance, but to extract the information encoded by the "constructor"._
+_NB: The "de-constructor" here is not the same thing as a "destructor".  Its purpose is not to free or destroy an 
+object instance, but to extract the information encoded by the "constructor".  While the process is usually referred
+to as "destructuring", I am not using the term "destructor" because of the ensuing ambiguity._
 
 Let us resume the example from the introduction featuring the `BinOp`-class from the `ast`-module.  The constructor
 takes three pieces of data: the node on the left of the binary operation, the operator, and the node on the right:
 ```python
 new_node = BinOp(left, op, right)
 ```
-The deconstructor's job is then to extract these three pieces of data:
+The de-constructor's job is then to extract these three pieces of data (I will therefore refer to it as _extractor_):
 ```python
-left, op, right = deconstruct(new_node)
+left, op, right = extract(new_node)
 ```
 
 Pattern matching tries to figure out how an object might have been constructed, according to the pattern templates you
@@ -30,14 +31,14 @@ match node:
     case BinOp(left, Add(), right):
         print("Left:", left, "Right:", right)
 ```
-then the pattern matcher tests the hypothesis that `node` could be created through the constructor `BinOp` with `Add`
-as the operator, but unknown objects for `left`, and `right`.  How does the pattern matcher actually do this?  It tries
-to deconstruct the object `node` as a `BinOp`, and then matches patterns on the individual items.  The code for the
-actual pattern matching looks (more or less) like this:
+then the pattern matcher tests the hypothesis that `node` could have been created through the constructor `BinOp` with 
+`Add` as the operator, but unknown objects for `left`, and `right`.  How does the pattern matcher actually do this?  It 
+tries to de-construct the object `node` as a `BinOp`, and then matches patterns on the individual items.  The code for 
+the actual pattern matching looks (more or less) like this:
 ```python
     def case1(_node):
         nonlocal left, right
-        items = deconstruct(node)
+        items = extract(node)
         if items is not None:
             left, op, right = items
             if isinstance(op, Add):
@@ -46,15 +47,15 @@ actual pattern matching looks (more or less) like this:
     if case1(node):
         print("Left:", left, "Right:", right)
 ```
-Clearly, the function that is called `deconstruct` here is at the core of the entire pattern matching process in such
+Clearly, the function that is called `extract` here is at the core of the entire pattern matching process in such
 an instance.
 
 
 ## Extracting Data from Objects
 
-The difficulty of the `deconstruct` method is to know, which data it needs to extract from an object, and in which
+The difficulty of the `extract` method is to know which data it needs to extract from an object, and in which
 order.  Luckily, Python's ability to inspect objects, and their methods, is of great help in this regard.  However,
-there are few special cases worth considering.
+there are few special cases worth considering first.
 
 
 ### Data Classes
@@ -75,20 +76,20 @@ john = Person('Doe', 'John', 34)
 ```
 The constructor of a data class is created automatically.  For this to work, all relevant fields need to be annotated,
 and, of course, their order matters.  In short: this is an ideal case for _pyPMatch_ to extract the data.  Just as
-the constructor for data classes is created automatically, _pyPMatch_ can automatically create a deconstructor.
+the constructor for data classes is created automatically, _pyPMatch_ can automatically create an extractor as well.
 
 
 ### AST Nodes
 
 The objects representing nodes in the Abstract Syntax Tree (AST) in the `ast`-module all contain a tuple specifying 
-the relevant fields with their names.  For the `BinOp`-node from above, for instance, this looks as follows (we leave
+the relevant fields with their names.  For the `BinOp`-node from above, for instance, this looks as follows (I left
 out all the unnecessary details here):
 ```python
 class BinOp(expr):
     ...
     _fields = ('left', 'op', 'right')
 ```
-This, again, is an ideal case for _pyPMatch_: it can simply base the deconstructor for AST-nodes on their respective
+This, again, is an ideal case for _pyPMatch_: it can simply base the extractor for AST-nodes on their respective
 `_fields` attribute.
 
 
@@ -98,21 +99,21 @@ If an object is neither a data class, nor has a `_fields` attribute, finding the
 more difficult, and brittle.  On the basis of a best effort, _pyPMatch_ inspects the `__init__`-method of the class
 in question, or, more precisely, the arguments of the `__init__`-method.
 
-In other words: _pyPMatch_ really tries to create a deconstructor based on the constructor.  The underlying assumption
-is, of course, that when you, as the programmer using pattern matching, uses a specific class in a pattern, the
+In other words: _pyPMatch_ really tries to create a de-constructor based on the constructor.  The underlying assumption
+is, of course, that when you, as the programmer using pattern matching, use a specific class in a pattern, the
 constructor's arguments are somehow reflected in an object's fields, and can be extracted later on; even though
 there is no reason why this has to be the case.
 
 
 ## Customising Extraction
 
-While _pyPMatch_ does a good job in extracting data from objects in most of the cases, there are use cases, where you
-want to directly specify how the extraction should work.  You this by writing your own "deconstruct" function for a 
+While _pyPMatch_ does a good job in extracting data from objects in most instances, there are use cases, where you
+want to directly specify how the extraction should work.  You do this by writing your own "extract" function for a 
 specific class.
 
-Just for the sake of explanation, you might take the `Person` class from above, and want the deconstructor to return
+Just for the sake of explanation, you might take the `Person` class from above, and want the extractor to return
 the name as a single string like `"John Doe"` instead of separated by first, and last name.  For the magic to happen,
-you add a static method `__unaplpy__` to your class, which takes the object to deconstruct as its single argument,
+you add a static method `__unapply__` to your class, which takes the object to deconstruct as its single argument,
 and returns either a tuple to signify success, or `None` otherwise.
 ```python
 @dataclass
@@ -140,7 +141,8 @@ match person:
 
 There are two points to consider when declaring your own `__unapply__`-method.
 - The method must either return a _tuple_, or `None`, where `None` means that the given object does not match.  This
-  applies even if you have only a single element to return; it still needs to be packed as a tuple.
+  applies even if you have only a single element to return; it still needs to be packed as a tuple (otherwise, the
+  extractor might misunderstand if the single element to be returned is itself a tuple).
 - _pyPMatch_ does **not** check the type of the object before calling `__unapply__`.  In case of automated 
   deconstruction as explained above, type checking _does_ take place, but not for `__unapply__`.  Accordingly,
   note how the `__unapply__`-method of `Person` above starts by doing this type checking.  The reasons for not
@@ -149,7 +151,7 @@ There are two points to consider when declaring your own `__unapply__`-method.
 
 Incidentally, due to Python's method resolving scheme, the `__unapply__`-method does not need to be declared as a
 static method.  If it is not a static method, it has no argument except for the mandatory `self`, which takes on the
-role of `obj`.  See the example on [custom deconstructors](../examples/pm_extractors.py).
+role of `obj`.  See the example on [custom extractors](../examples/pm_extractors.py).
 
 By the way, the naming `__unapply__` stems from [Scala](https://scala-lang.org/), from which _pyPMatch_ has primarily
 drawn its ideas, and design.  There are, of course, valid reasons to use one of several other names, but for now, 
@@ -158,14 +160,14 @@ drawn its ideas, and design.  There are, of course, valid reasons to use one of 
 
 ### Type Checking
 
-Whenever _pyPMatch_ deconstructs a data class, say, it starts by checking if the given object is an instance of the
+Whenever _pyPMatch_ de-constructs a data class, say, it starts by checking if the given object is an instance of the
 specific data class in question.  This type check is not done in case it uses an `__unapply__`-method.  The rationale
-for this is to allow greater freedom, and support kind of "duck typing".  As long as `__unapply__` is happy with 
+for this is to allow greater freedom, and support for "duck typing".  As long as `__unapply__` is happy with 
 whatever object it has received, there is no need for _pyPMatch_ to deny this.
 
 The Scala book has a nice example to illustrate this point.  Let us assume, we are given a string `s`, which should be
-an email address, and we want to get the server user for this email-address.  You can, of course, use something like
-regular expressions to tackle this problem.  But you can also write a class `Email`, which can do the deconstruction
+an email address, and we want to get the server for this email-address.  You can, of course, use something like
+regular expressions to tackle this problem.  But you can also write a class `Email`, which can do the extraction
 for strings.
 ```python
 class Email:
@@ -186,8 +188,11 @@ def get_email_server(s):
         case _:
             return "<invalid email-address>"
 ```
-Naturally, you can have a fully equipped `Email`-class, which just happens to _also_ support strings in its
-deconstructor, or even widen the range of accepted objects further:
+While this is most certainly an overkill in this example, it allows you to customise pattern matching to a large
+extend, and it can become very handy if you are writing a library, say.
+
+Naturally, you can have a fully fledged `Email`-class, which just happens to _also_ support strings in its
+extractor, or even widen the range of accepted objects further:
 ```python
 class Email:
 
@@ -211,22 +216,24 @@ class Email:
         return None
 ```
 
+
+
 ## Concluding Remarks
 
-Note that deconstruction is always based on a class.  That is, even if the object that is deconstructed in pattern
-matching has a `__unapply__`-method, it will never be used.  The reason for this is simple: if we used the 
+Note that the extraction is always based on a class.  That is, even if the object that is de-constructed in pattern
+matching itself has a `__unapply__`-method, it will never be used.  The reason for this is simple: if we used the 
 `__unapply__`-method on a specific object, there is absolutely no telling what the returned values _mean_.
 If we base it on classes/types instead, we _know_ that `Email` returns the user name, and the server.
 
-The deconstruction of objects is taking place in a function `unapply`, which resides in
+The de-construction of objects is taking place in a function `unapply`, which resides in
 [match_template.py](../pmatch/match_template.py).  It takes an object, and a class as arguments, and then goes through
 the following sequence:
 - If the class has an `__unapply__`-method, that method is called, and its result is returned.  In this case, there
-  is no other deconstruction attempted.  However, if the `__unapply__`-method returns the value `NotImplemented`,
-  _pyPMatch_ does continue with the deconstruction process (I am not sure if there really is a use case for this,
+  is no other extraction attempted.  However, if the `__unapply__`-method returns the value `NotImplemented`,
+  _pyPMatch_ does continue with the extraction process (I am not sure if there really is a use case for this,
   though).
 - If the given object is an instance of the given class, the following are tried:
-    - If the class is one of the builtin types like `int`, or `str`, there is no further deconstruction done, but
+    - If the class is one of the builtin types like `int`, or `str`, there is no further extraction done, but
       the empty tuple is returned;
     - If the class (!) has an attribute `_fields`, which is a tuple of strings, the respective attributes of the
       object are read, and then returned as a tuple.  If one of the attributes is missing, `None` is returned instead;
