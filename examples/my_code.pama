@@ -1,0 +1,14 @@
+from random import randint
+
+def apply_to(nonneg20):
+    match nonneg20:
+        case 0:
+            print("nothing")
+        case 1 | 4 | 9 | 16:
+            print("a square")
+        case 2 | 3 | 5 | 7 | 11 | 13 | 17 | 19:
+            print("a prime")
+        case _:
+            print("some other number")
+
+apply_to( randint(0, 19) )

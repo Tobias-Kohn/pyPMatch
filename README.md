@@ -97,6 +97,22 @@ print("=" * 80)
 print(match_code)   # additional code for the actual matching
 ```
 
+The function `pama_translate` can also process files for later application using the function `pama_apply`:
+```python
+import os
+from pmatch import pama_translate, pama_apply
+
+my_pama_file = os.path.join("examples","my_code.pama")
+
+code, match_code = pama_translate(
+    source=None,
+    filename=my_pama_file
+)
+
+pama_app=pama_apply(code,match_code)   
+for value in [7,8,9]:
+    pama_app.apply_to(value)
+```
 
 #### Import Code From Python Modules
 

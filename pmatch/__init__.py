@@ -71,3 +71,20 @@ def pama_translate(source: str, filename: str = '<string>'):
     code = scanner.get_text()
     match_module = scanner.get_match_code()
     return code, match_module
+
+def pama_apply(code, match_module, module=None):
+    """
+    Executes the translated source program and auxiliary `__match__` module.
+
+    The code is run inside a new dedicated module, which is then returned.
+    """
+    match_mod = types.ModuleType('__match__')
+    exec(builtins.compile(match_module, '__match__', 'exec'), match_mod.__dict__)
+    filename = "<string>"
+    compiled_code = builtins.compile(code, filename, 'exec')
+    name = filename
+    mod = types.ModuleType(name) if module is None else module
+    mod.__match__ = match_mod
+    exec(compiled_code, mod.__dict__)
+    return mod
+
