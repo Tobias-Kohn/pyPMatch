@@ -7,8 +7,8 @@ header level increases.
 ## Case in point
 
 If the default font size for header level 1 is too large, 
-a pandoc/panflute filter scale the fonts progressively 
-downward by simply increasing the heading level.
+use a pandoc/panflute filter to scale the fonts progressively 
+downward simply by increasing the heading level.
 
 For example, to create a PDF from this markdown with the
 default fonts, install 
