@@ -10,7 +10,7 @@ def increase_header_level(elem : Element, doc : Doc):
         case Element():
             pass
         case _:
-            return [] # failsafe: return nothing in not properly typed
+            return [] # failsafe: return nothing if not properly typed
 
     return
 
