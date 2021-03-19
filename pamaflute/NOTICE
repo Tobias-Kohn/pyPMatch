@@ -1,0 +1,15 @@
+pamaflute
+Copyright (C) 2021 nOw Innovation Inc.
+
+This product includes content Copyright (C) 2016, Sergio Correia
+and modified by nOw Innovation Inc. under terms of the 
+BSD 3-Clause "New" or "Revised" License
+
+The modifications made in the derivative work 
+relate to refactoring the example originally adapted from
+https://github.com/sergiocorreia/panflute/blob/master/docs/source/index.rst
+into a compilable text file "increase_header_level.pama" (expressed in
+the language of pyPMatch), and a python program "increase_header_level.py" 
+that:
+* translates the .pama file; and 
+* applies the resulting code to implement the original panflute filter. 
