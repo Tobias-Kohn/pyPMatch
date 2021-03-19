@@ -1,0 +1,16 @@
+from panflute import *
+
+def increase_header_level(elem : Element, doc : Doc):
+    match elem:
+        case Header():
+            if elem.level < 6:
+                elem.level += 1
+            else:
+                return []  #   Delete headers already in level 6
+        case Element():
+            pass
+        case _:
+            return [] # failsafe: return nothing in not properly typed
+
+    return
+
