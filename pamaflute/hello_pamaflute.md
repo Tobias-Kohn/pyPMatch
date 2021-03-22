@@ -32,4 +32,6 @@ Increasing the header level in this manner has side-effects on the
 table-of-contents and other features of a document.  There are better 
 ways to alter the style of heading fonts if that is your primary goal.
 
-
+#
+   Copyright (C) 2021 nOw Innovation Inc.
+   > ***Redistribution permitted under terms of [the Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0 "the License")***
