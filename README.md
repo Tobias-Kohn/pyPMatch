@@ -1,7 +1,10 @@
 # pyPMatch
 
-> **This is work in progress!**  Expect some rough spots, and some features to still be missing.
+---
 
+**This project eventually led to pattern matching being included in Python 3.10 (see [PEP 634](https://www.python.org/dev/peps/pep-0634/)).  It is thus obsolete and no longer maintained.**
+
+---
 
 _pyPMatch_ provides **Pattern Matching** in _Python_.  It is mostly based on _pattern matching_ as found in 
 [_Scala_](https://www.scala-lang.org/).  Its main objective is to deconstruct objects, and thereby check if any
